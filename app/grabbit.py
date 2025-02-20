@@ -1,3 +1,4 @@
+from mimetypes import guess_extension
 from pathlib import Path
 from typing import Optional
 from logging import Logger
@@ -133,28 +134,26 @@ class Grabbit:
             return self._reddit.submission(id=crossposts[-1]["id"])
         return post
 
-    @staticmethod
-    def _process_gallery(submission: Submission) -> list[str]:
-        gallery_data = getattr(submission, 'gallery_data', None)
-        if gallery_data is None:
+    def _process_gallery(self, submission: Submission) -> list[str]:
+        try:
+            gallery_data = getattr(submission, 'gallery_data')
+        except AttributeError:
             return []
 
-        # Get links to each image in Reddit gallery
-        # Try block to account for possibility of some posts media data not containing "p", "u", etc. elements
-        post = vars(submission)
         urls = []
-        try:
-            ord = [i["media_id"] for i in post["gallery_data"]["items"]]
-            for key in ord:
-                img = post["media_metadata"][key]
-                if len(img["p"]) > 0:
-                    url = img["p"][-1]["u"]
-                else:
-                    url = img["s"]["u"]
-                url = url.split("?")[0].replace("preview", "i")
-                urls.append(url)
-        except Exception:
-            return urls
+        for media_id in [item["media_id"] for item in gallery_data["items"]]:
+            try:
+                img = getattr(submission, "media_metadata")[media_id]
+            except AttributeError:
+                self._logger.warning(f"Media metadata missing for media_id {media_id}")
+                continue
+
+            extension = guess_extension(img["m"], strict=False).removeprefix(".")
+            if extension in img["s"]:
+                url = img["s"][extension]
+            else:
+                url = img["s"]["u"]
+            urls.append(url)
 
         return urls
 
