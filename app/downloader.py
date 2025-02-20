@@ -186,8 +186,8 @@ class Downloader:
             file = self._download_generic_image(url, target / str(count))
             if file:
                 files.append(file)
-                self._logger.debug(f"Downloaded image from album {target.name}: {count}/{len(urls)}")
+                self._logger.debug(f"Downloaded item from album {target.name}: {count+1}/{len(urls)}")
             else:
-                self._logger.debug(f"Failed to download image from album {target.name}: {count}/{len(urls)}")
+                self._logger.debug(f"Failed to download item from album {target.name}: {count+1}/{len(urls)}")
 
         return files
