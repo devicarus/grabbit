@@ -4,6 +4,7 @@ from typing import Optional
 from logging import Logger
 
 import requests
+from requests import HTTPError
 from requests.models import Response
 
 from app.typing_custom import MediaType
@@ -13,7 +14,7 @@ def follow_redirects(url: str) -> str:
         response = requests.head(url, allow_redirects = True, timeout = 10)
         response.raise_for_status()
         return response.url.split("?")[0] 
-    except Exception:
+    except HTTPError:
         return url
         
 def guess_media_type(response: Response) -> MediaType:
@@ -29,6 +30,7 @@ def guess_media_extension(response: Response) -> Optional[str]:
 
 class NullLogger(Logger):
     def __init__(self):
+        super().__init__("NullLogger")
         pass
 
     def debug(self, *args, **kwargs):

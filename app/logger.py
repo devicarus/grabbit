@@ -12,7 +12,7 @@ class GrabbitFormatter(logging.Formatter):
     _blue = "\x1b[34m"
     _reset = "\x1b[0m"
     _format = '%(asctime)s [T: %(total)d][F: %(failed)d][A: %(added)d][%(levelname)s]: %(message)s'
-    
+
     COLORS = {
         logging.DEBUG: _blue,
         logging.INFO: _green,
@@ -64,9 +64,9 @@ class GrabbitLogger(logging.Logger):
 
     def _get_extra(self):
         return {
-            "total": len(self.geddit._downloadedPosts),
-            "failed": len(self.geddit._failedDownloads),
-            "added": self.geddit._addedCount
+            "total": len(self.geddit.downloaded_posts),
+            "failed": len(self.geddit.failed_downloads),
+            "added": self.geddit.added_count
         }
 
     def critical(self, msg, *args, **kwargs):

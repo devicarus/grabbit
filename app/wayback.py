@@ -43,10 +43,11 @@ class WaybackList:
         
         media = self._get_media_url(response) # TODO: If this is used, push the original URL as next
         return media if media else self._urls[current]
-        
-    def _get_media_url(self, response: Response) -> Optional[str]:
+
+    @staticmethod
+    def _get_media_url(response: Response) -> Optional[str]:
         match = re.findall(r'(?<=source src=")[^"]+(?=")', response.text)
-        if not match: return
+        if not match: return None
         
         if len(match) > 1:
             raise Exception("More than one source found")

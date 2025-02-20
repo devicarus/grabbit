@@ -80,8 +80,8 @@ class Downloader:
                 return (lambda x: [x] if x else [])(self._download_video(url, target))
             case MediaType.TEXT:
                 return [self._download_text(post.data, target)]
-            case MediaType.UNKNOWN:
-                return []
+
+        return []
 
     def _get_media_type(self, post: Post, url: str) -> MediaType:
         if post.source in self._sources["video"]:
@@ -116,7 +116,7 @@ class Downloader:
     def _download_generic_image(self, url: str, target: Path) -> Optional[Path]:
         with self._http_client.get(url, stream=True) as response:
             if response.status_code != 200:
-                return
+                return None
 
             extension = guess_media_extension(response)
             if extension:
@@ -131,7 +131,8 @@ class Downloader:
 
         return target
 
-    def _download_text(self, data: list[str], target: Path) -> Path:
+    @staticmethod
+    def _download_text(data: list[str], target: Path) -> Path:
         target = target.with_suffix(".md")
         with open(target, "w", encoding="utf-8") as f:
             f.write("\n".join(data))
@@ -158,11 +159,11 @@ class Downloader:
                         self._logger.debug(f"YTDL download error: {e.msg}")
                         if e.msg and ("HTTP Error 404" in e.msg or "HTTP Error 410" in e.msg):
                             self._logger.debug("Resource gone, won't retry")
-                            return
+                            return None
 
                         if e.msg and "Unsupported URL" in e.msg:
                             self._logger.warning("Unsupported URL, won't retry")
-                            return
+                            return None
 
                         retry_count += 1
                         if retry_count < max_retries:
@@ -172,7 +173,7 @@ class Downloader:
                         continue
                     raise
 
-        return
+        return None
 
     def _download_album(self, urls: list[str], target: Path) -> list[Path]:
         if len(urls) == 0:
