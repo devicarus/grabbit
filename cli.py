@@ -1,0 +1,60 @@
+import argparse
+import json
+import signal
+import sys
+from pathlib import Path
+import logging
+
+from praw import Reddit
+
+from app.grabbit import Grabbit
+from app.logger import GrabbitLogger
+
+def main(args):
+    def exit_handler(*_):
+        logger.info("Ctrl+C detected! Saving data before exit...")
+        grabbit.save_all()
+        sys.exit(0)
+
+    signal.signal(signal.SIGINT, exit_handler)
+
+    with open("user.json", encoding="utf-8") as f:
+        config = json.load(f)
+
+    reddit = Reddit(
+        user_agent = "Grabbit - Saved Posts Downloader",
+        client_id = config["client_id"],
+        client_secret = config["client_secret"],
+        username = config["username"],
+        password = config["password"]
+    )
+
+    logger = GrabbitLogger(level=logging.DEBUG if args.debug else logging.INFO)
+    grabbit = Grabbit(reddit=reddit, logger=logger)
+    logger.set_grabbit(grabbit)
+    grabbit.init(Path("data"))
+    grabbit.load_post_queue(args.csv)
+    grabbit.run(skip_failed=args.skip_failed)
+    grabbit.save_all()
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description = "Grabbit - Reddit Saved Posts Downloader")
+    parser.add_argument(
+        "--debug", "-d",
+        action = "store_true",
+        help = "to activate debug mode",
+    )
+    parser.add_argument(
+        "--csv",
+        metavar="FILENAME",
+        type = Path,
+        help = "load Reddit GDPR saved posts export CSV file",
+    )
+    parser.add_argument(
+        "--skip-failed",
+        action = "store_true",
+        help = "skip previously failed downloads",
+    )
+
+    main(parser.parse_args())
