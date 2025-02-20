@@ -103,7 +103,7 @@ class Grabbit:
                 "title": post.title,
                 "author": post.author,
                 "date": post.date,
-                "files": [file.name for file in files],
+                "files": [str(file.relative_to(target.parent)) for file in files],
             }, file, indent=4)
 
     def _to_post(self, submission: Submission) -> Post:
