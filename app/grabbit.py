@@ -65,9 +65,9 @@ class Grabbit:
                     f"Skipping post {submission.id} from r/{submission.subreddit.display_name} - previously failed")
                 continue
 
-            submission = self._fix_crosspost(submission)
-            post = self._to_post(submission)
             self._logger.debug(f"Parsing submission {submission.id} from r/{submission.subreddit.display_name} (https://reddit.com{submission.permalink})")
+            original_submission = self._fix_crosspost(submission)
+            post = self._to_post(original_submission)
 
             self._logger.debug(post)
             if post.url is None and post.url_preview is None and (post.data == ['[removed]'] or len(post.data) == 0):
@@ -88,7 +88,10 @@ class Grabbit:
 
             self._save_metadata(post, files, target)
 
-            self.downloaded_posts.add(post.id)
+            self.downloaded_posts.add(original_submission.id)
+            if submission.id != original_submission.id: # If the post is a crosspost, add the crosspost id as well
+                self.downloaded_posts.add(submission.id)
+
             self.added_count += 1
             self._logger.info(f"✅ Downloaded post {post.id} from r/{post.sub}")
 
