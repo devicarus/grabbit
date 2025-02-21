@@ -98,8 +98,8 @@ class Grabbit:
             if self.added_count % 10 == 0:
                 self.save_all()
 
-    def _save_metadata(self, post: Post, files: list[Path], target: Path) -> None:
-        self._logger.debug(files)
+    @staticmethod
+    def _save_metadata(post: Post, files: list[Path], target: Path) -> None:
         with open(target.with_suffix(".json"), "w", encoding="utf-8") as file:
             json.dump({
                 "id": post.id,
