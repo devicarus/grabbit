@@ -26,7 +26,7 @@ def guess_media_type(response: Response) -> MediaType:
     return MediaType.UNKNOWN
 
 def guess_media_extension(response: Response) -> Optional[str]:
-    return guess_extension(response.headers["content-type"].split(";")[0].strip())
+    return guess_extension(response.headers["content-type"].split(";")[0].strip(), strict=False)
 
 class NullLogger(Logger):
     def __init__(self):
