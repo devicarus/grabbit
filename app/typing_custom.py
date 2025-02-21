@@ -15,6 +15,11 @@ class Post:
     url_preview: Optional[str] = None
     source: Optional[str] = None
     data: list[str] = field(default_factory=list)
+
+    def good(self):
+        return (self.url is not None
+                or self.url_preview is not None
+                or (self.data != ['[removed]'] and self.data != ['[ Removed by Reddit in response to a copyright notice. ]'] and len(self.data) != 0))
     
 class MediaType(Enum):
     IMAGE = 1

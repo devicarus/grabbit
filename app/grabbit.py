@@ -70,7 +70,7 @@ class Grabbit:
             post = self._to_post(original_submission)
 
             self._logger.debug(post)
-            if post.url is None and post.url_preview is None and (post.data == ['[removed]'] or len(post.data) == 0):
+            if not post.good():
                 self._logger.info(f"Skipping post {post.id} from r/{post.sub} - no valid data to work with")
                 continue
 
