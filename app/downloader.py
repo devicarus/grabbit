@@ -5,13 +5,14 @@ from typing import Optional
 from logging import Logger
 
 from praw.models.reddit.base import urlparse
+from requests import HTTPError
 from yt_dlp import YoutubeDL
 from yt_dlp.utils import DownloadError
 
-from app.utils import follow_redirects, guess_media_type, guess_media_extension, NullLogger
+from app.utils import guess_media_type, guess_media_extension, NullLogger
 from app.typing_custom import Post, MediaType
 from app.wayback import Wayback
-from app.httpclient import HTTPClient
+from app.httpclient import HTTPClient, RetryLimitExceededException
 
 
 class Downloader:
@@ -49,10 +50,10 @@ class Downloader:
             if len(files) > 0:
                 return files
 
-            redirected_url = follow_redirects(post.url)
+            redirected_url = self._follow_redirects(post.url)
             if redirected_url != post.url:
                 self._logger.debug("Attempting download from redirected URL")
-                files = self._download_media(post, follow_redirects(post.url), target)
+                files = self._download_media(post, redirected_url, target)
                 if len(files) > 0:
                     return files
 
@@ -194,3 +195,11 @@ class Downloader:
                 self._logger.debug(f"Failed to download item from album {target.name}: {count+1}/{len(urls)}")
 
         return files
+
+    def _follow_redirects(self, url: str) -> str:
+        try:
+            response = self._http_client.head(url, allow_redirects=True, timeout=10, max_retries=1)
+            response.raise_for_status()
+            return response.url.split("?")[0]
+        except (RetryLimitExceededException, HTTPError):
+            return url

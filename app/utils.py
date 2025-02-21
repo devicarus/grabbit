@@ -3,19 +3,9 @@ from typing import Optional
 
 from logging import Logger
 
-import requests
-from requests import HTTPError
 from requests.models import Response
 
-from app.typing_custom import MediaType
-
-def follow_redirects(url: str) -> str:
-    try:
-        response = requests.head(url, allow_redirects = True, timeout = 10)
-        response.raise_for_status()
-        return response.url.split("?")[0] 
-    except HTTPError:
-        return url
+from app.typing_custom import MediaType, PostId
         
 def guess_media_type(response: Response) -> MediaType:
     media_type = response.headers["content-type"]
