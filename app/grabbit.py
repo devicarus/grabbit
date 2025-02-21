@@ -140,6 +140,9 @@ class Grabbit:
         except AttributeError:
             return []
 
+        if gallery_data is None:
+            return []
+
         urls = []
         for media_id in [item["media_id"] for item in gallery_data["items"]]:
             try:
