@@ -154,8 +154,9 @@ class Downloader:
                 try:
                     status = ydl.download([url])
                     if status != 0: self._logger.warning("YTDL exited with non-zero status, but no exception was raised")
-                    return next((file for file in target.parent.iterdir() if
-                                 file.name == target.name and file.suffix != ".json"), None)
+                    filename = next((file for file in target.parent.iterdir() if file.stem == target.stem and file.suffix != ".json"), None)
+                    if filename is None: self._logger.warning("YTDL exited with zero status, but no file was found")
+                    return filename
                 except Exception as e:
                     if isinstance(e, DownloadError):
                         self._logger.debug(f"YTDL download error: {e.msg}")
