@@ -65,9 +65,9 @@ class Grabbit:
                     f"Skipping post {submission.id} from r/{submission.subreddit.display_name} - previously failed")
                 continue
 
-            self._logger.debug(f"Parsing submission {submission.id} from r/{submission.subreddit.display_name}")
             submission = self._fix_crosspost(submission)
             post = self._to_post(submission)
+            self._logger.debug(f"Parsing submission {submission.id} from r/{submission.subreddit.display_name} (https://reddit.com{submission.permalink})")
 
             self._logger.debug(post)
             if post.url is None and post.url_preview is None and (post.data == ['[removed]'] or len(post.data) == 0):
