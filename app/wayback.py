@@ -38,7 +38,7 @@ class WaybackList:
         
         response = self._http_client.get(self._urls[current])
         
-        if guess_media_type(response) != MediaType.UNKNOWN:
+        if guess_media_type(response) != MediaType.UNKNOWN: # No need for more processing if it's a direct media hit
             return self._urls[current]
         
         media = self._get_media_url(response) # TODO: If this is used, push the original URL as next
