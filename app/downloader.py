@@ -20,13 +20,15 @@ class Downloader:
     _sources = {
         "image": [
             "i.redd.it",
-            "reddit.com"
+            "reddit.com",
+            "i.redgifs.com"
         ],
         "video": [
             "youtube.com",
             "youtu.be",
             "v.redd.it",
             "redgifs.com",
+            "v3.redgifs.com",
             "gfycat.com"
         ],
     }
