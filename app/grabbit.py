@@ -72,6 +72,7 @@ class Grabbit:
             self._logger.debug(post)
             if not post.good():
                 self._logger.info(f"Skipping post {post.id} from r/{post.sub} - no valid data to work with")
+                self.failed_downloads.add(post.id)
                 continue
 
             self._logger.debug(f"Attempting to download post {post.id} from r/{post.sub}")
@@ -87,6 +88,9 @@ class Grabbit:
                 continue
 
             self._save_metadata(post, files, target)
+
+            if not skip_failed and submission.id in self.failed_downloads:
+                self.failed_downloads.remove(submission.id)
 
             self.downloaded_posts.add(original_submission.id)
             if submission.id != original_submission.id: # If the post is a crosspost, add the crosspost id as well
