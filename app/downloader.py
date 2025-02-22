@@ -75,6 +75,11 @@ class Downloader:
         return []
 
     def _download_media(self, post: Post, url: str, target: Path) -> list[Path]:
+        # TODO: Temporary, not sure how to handle this systematically yet
+        if "https://i.imgur.com/removed.png" in self._follow_redirects(url):
+            self._logger.warning(f"Bad link condition triggered")
+            return []
+
         match self._get_media_type(post, url):
             case MediaType.IMAGE:
                 return (lambda x: [x] if x else [])(self._download_generic_image(url, target))
