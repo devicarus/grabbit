@@ -3,9 +3,9 @@ from typing import Optional
 
 from requests.models import Response
 
-from app.utils import guess_media_type
-from app.typing_custom import MediaType
-from app.httpclient import HTTPClient
+from grabbit.utils import guess_media_type
+from grabbit.typing_custom import MediaType
+from grabbit.httpclient import HTTPClient
 
 class WaybackList:
     _current: int = 0

@@ -5,9 +5,9 @@ import sys
 from pathlib import Path
 import logging
 
-from app.grabbit import Grabbit
-from app.logger import GrabbitLogger
-from app.typing_custom import RedditUser
+from grabbit.grabbit import Grabbit
+from grabbit.logger import GrabbitLogger
+from grabbit.typing_custom import RedditUser
 
 def main(args):
     def exit_handler(*_):

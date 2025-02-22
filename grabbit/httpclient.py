@@ -6,7 +6,7 @@ import requests
 from requests.models import Request, Response
 from requests.exceptions import ConnectionError, ReadTimeout
 
-from app.utils import NullLogger
+from grabbit.utils import NullLogger
 
 class RetryLimitExceededException(Exception):
     pass

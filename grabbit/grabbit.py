@@ -7,9 +7,9 @@ import json
 from praw.models import Submission
 from praw import Reddit
 
-from app.downloader import Downloader
-from app.typing_custom import PostId, Post, RedditUser
-from app.utils import load_gdpr_saved_posts_csv, NullLogger
+from grabbit.downloader import Downloader
+from grabbit.typing_custom import PostId, Post, RedditUser
+from grabbit.utils import load_gdpr_saved_posts_csv, NullLogger
 
 
 class Grabbit:

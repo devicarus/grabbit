@@ -3,7 +3,7 @@ from copy import copy
 from datetime import datetime
 import os
 
-from app.grabbit import Grabbit
+from grabbit.grabbit import Grabbit
 
 class GrabbitFormatter(logging.Formatter):
     _red = "\x1b[31m"

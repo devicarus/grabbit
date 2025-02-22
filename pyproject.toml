@@ -1,0 +1,18 @@
+[project]
+name = "grabbit"
+version = "0.1.0"
+description = "Reddit Saved Posts Downloader"
+authors = [
+    {name = "devicarus",email = "devicarus@icloud.com"}
+]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "yt-dlp (>=2025.2.19)",
+    "requests (>=2.32.3,<3.0.0)",
+    "praw (>=7.8.1,<8.0.0)"
+]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

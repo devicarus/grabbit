@@ -7,7 +7,7 @@ from logging import Logger
 
 from requests.models import Response
 
-from app.typing_custom import MediaType, PostId
+from grabbit.typing_custom import MediaType, PostId
         
 def guess_media_type(response: Response) -> MediaType:
     media_type = response.headers["content-type"]

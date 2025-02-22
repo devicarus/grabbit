@@ -9,10 +9,10 @@ from requests import HTTPError
 from yt_dlp import YoutubeDL
 from yt_dlp.utils import DownloadError
 
-from app.utils import guess_media_type, guess_media_extension, NullLogger
-from app.typing_custom import Post, MediaType
-from app.wayback import Wayback
-from app.httpclient import HTTPClient, RetryLimitExceededException
+from grabbit.utils import guess_media_type, guess_media_extension, NullLogger
+from grabbit.typing_custom import Post, MediaType
+from grabbit.wayback import Wayback
+from grabbit.httpclient import HTTPClient, RetryLimitExceededException
 
 
 class Downloader:
