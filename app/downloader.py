@@ -31,7 +31,7 @@ class Downloader:
             "redgifs.com",
             "v3.redgifs.com",
             "gfycat.com"
-        ],
+        ]
     }
 
     _logger: Logger
