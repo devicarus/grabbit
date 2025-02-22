@@ -1,15 +1,39 @@
-import argparse
 import json
 import signal
 import sys
 from pathlib import Path
 import logging
 
+import click
+
 from grabbit.grabbit import Grabbit
 from grabbit.logger import GrabbitLogger
 from grabbit.typing_custom import RedditUser
 
-def main(args):
+@click.command()
+@click.argument("output_dir", type = Path)
+@click.argument("user_config", type = Path)
+@click.option(
+    "--debug", "-d",
+    is_flag = True,
+    help = "to activate debug mode",
+)
+@click.option(
+    "--csv",
+    metavar="FILENAME",
+    type = Path,
+    help = "load Reddit GDPR saved posts export CSV file",
+)
+@click.option(
+    "--skip-failed",
+    is_flag = True,
+    help = "skip previously failed downloads",
+)
+def cli(output_dir: Path, user_config: Path, debug: bool, csv: Path, skip_failed: bool):
+    """
+    OUTPUT_DIR is the directory where the downloaded files will be saved
+    USER_CONFIG is the path to a JSON file containing Reddit user credentials
+    """
     def exit_handler(*_):
         logger.info("Ctrl+C detected! Saving data before exit...")
         grabbit.exit()
@@ -17,45 +41,13 @@ def main(args):
 
     signal.signal(signal.SIGINT, exit_handler)
 
-    with open(args.user_config, encoding="utf-8") as f:
+    with open(user_config, encoding="utf-8") as f:
         config = json.load(f)
         user = RedditUser(**config)
 
-    logger = GrabbitLogger(level=logging.DEBUG if args.debug else logging.INFO)
+    logger = GrabbitLogger(level=logging.DEBUG if debug else logging.INFO)
     grabbit = Grabbit(user=user, logger=logger)
     logger.set_grabbit(grabbit)
-    grabbit.init(args.output_directory)
-    grabbit.load_post_queue(args.csv)
-    grabbit.download_queue(skip_failed=args.skip_failed)
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description = "Grabbit - Reddit Saved Posts Downloader")
-    parser.add_argument(
-        "output_directory",
-        type = Path,
-        help = "output directory for downloaded media with metadata",
-    )
-    parser.add_argument(
-        "user_config",
-        type = Path,
-        help = "path to user configuration file",
-    )
-    parser.add_argument(
-        "--debug", "-d",
-        action = "store_true",
-        help = "to activate debug mode",
-    )
-    parser.add_argument(
-        "--csv",
-        metavar="FILENAME",
-        type = Path,
-        help = "load Reddit GDPR saved posts export CSV file",
-    )
-    parser.add_argument(
-        "--skip-failed",
-        action = "store_true",
-        help = "skip previously failed downloads",
-    )
-
-    main(parser.parse_args())
+    grabbit.init(output_dir)
+    grabbit.load_post_queue(csv)
+    grabbit.download_queue(skip_failed=skip_failed)
