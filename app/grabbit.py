@@ -3,13 +3,13 @@ from pathlib import Path
 from typing import Optional
 from logging import Logger
 import json
-import csv
 
 from praw.models import Submission
 from praw import Reddit
 
 from app.downloader import Downloader
 from app.typing_custom import PostId, Post
+from app.utils import load_gdpr_saved_posts_csv
 
 
 class Grabbit:
@@ -36,23 +36,25 @@ class Grabbit:
         self._wd.mkdir(parents=True, exist_ok=True)
 
         self._logger.info("Checking for existing data...")
-        self.downloaded_posts = self._load_set_from_json(self._wd / "downloaded.json")
-        self.failed_downloads = self._load_set_from_json(self._wd / "failed.json")
+        self._load()
 
         if len(self.downloaded_posts) > 0:
-            self._logger.info(f"Loaded {len(self.downloaded_posts)} downloaded posts")
+            self._logger.info(f"Loaded IDs of {len(self.downloaded_posts)} downloaded posts")
         if len(self.failed_downloads) > 0:
-            self._logger.info(f"Loaded {len(self.failed_downloads)} failed downloads")
+            self._logger.info(f"Loaded IDs of {len(self.failed_downloads)} failed downloads")
+
+    def exit(self) -> None:
+        self._save()
 
     def load_post_queue(self, csv_path: Optional[Path]) -> None:
         if csv_path:
             self._logger.info(f"Getting post queue from file {csv_path}")
-            self._submissionQueue = self._reddit.info(fullnames=self._load_gdpr_saved_posts_csv(csv_path))
+            self._submissionQueue = self._reddit.info(fullnames=load_gdpr_saved_posts_csv(csv_path))
         else:
             self._logger.info("Getting post queue from Reddit")
             self._submissionQueue = self._reddit.user.me().saved(limit=None)
 
-    def run(self, skip_failed: bool = False) -> None:
+    def download_queue(self, skip_failed: bool = False) -> None:
         self._logger.info("Starting download process...")
         for submission in self._submissionQueue:
             if submission.id in self.downloaded_posts:
@@ -100,7 +102,9 @@ class Grabbit:
             self._logger.info(f"✅ Downloaded post {post.id} from r/{post.sub}")
 
             if self.added_count % 10 == 0:
-                self.save_all()
+                self._save()
+
+        self._save()
 
     @staticmethod
     def _save_metadata(post: Post, files: list[Path], target: Path) -> None:
@@ -167,30 +171,18 @@ class Grabbit:
 
         return urls
 
-    def save_all(self):
-        self._logger.info("Saving data...")
-        self._save_set_as_json(self.downloaded_posts, self._wd / "downloaded.json")
-        self._save_set_as_json(self.failed_downloads, self._wd / "failed.json")
+    def _save(self):
+        with open(self._wd / "db.json", "w", encoding="utf-8") as file:
+            json.dump({
+                "downloaded": list(self.downloaded_posts),
+                "failed": list(self.failed_downloads)
+            }, file, indent=4)
 
-    @staticmethod
-    def _save_set_as_json(data: set, path: Path):
-        with open(path, "w") as file:
-            json.dump(list(data), file, indent=4)
-
-    @staticmethod
-    def _load_set_from_json(path: Path) -> set:
+    def _load(self):
         try:
-            with open(path, 'r') as f:
-                json_dict = json.load(f)
-            return set(json_dict)
+            with open(self._wd / "db.json", "r", encoding="utf-8") as file:
+                data = json.load(file)
+                self.downloaded_posts = set(data["downloaded"])
+                self.failed_downloads = set(data["failed"])
         except FileNotFoundError:
-            return set()
-
-    @staticmethod
-    def _load_gdpr_saved_posts_csv(path: Path) -> list[str]:
-        with open(path, newline="", encoding="utf-8") as f:
-            reader = csv.reader(f)
-            ids = [row[0] for row in reader]
-            del ids[0]
-        names = [id if id.startswith("t3_") else f"t3_{id}" for id in ids]
-        return names
+            pass

@@ -13,7 +13,7 @@ from app.logger import GrabbitLogger
 def main(args):
     def exit_handler(*_):
         logger.info("Ctrl+C detected! Saving data before exit...")
-        grabbit.save_all()
+        grabbit.exit()
         sys.exit(0)
 
     signal.signal(signal.SIGINT, exit_handler)
@@ -34,8 +34,7 @@ def main(args):
     logger.set_grabbit(grabbit)
     grabbit.init(args.output_directory)
     grabbit.load_post_queue(args.csv)
-    grabbit.run(skip_failed=args.skip_failed)
-    grabbit.save_all()
+    grabbit.download_queue(skip_failed=args.skip_failed)
 
 
 if __name__ == "__main__":

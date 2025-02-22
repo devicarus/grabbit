@@ -1,4 +1,6 @@
+import csv
 from mimetypes import guess_extension
+from pathlib import Path
 from typing import Optional
 
 from logging import Logger
@@ -17,6 +19,13 @@ def guess_media_type(response: Response) -> MediaType:
 
 def guess_media_extension(response: Response) -> Optional[str]:
     return guess_extension(response.headers["content-type"].split(";")[0].strip(), strict=False)
+
+def load_gdpr_saved_posts_csv(path: Path) -> list[PostId]:
+    with open(path, encoding="utf-8") as file:
+        reader = csv.reader(file)
+        ids = [row[0] if row[0].startswith("t3_") else f"t3_{row[0]}" for row in reader]
+        del ids[0]
+    return ids
 
 class NullLogger(Logger):
     def __init__(self):
