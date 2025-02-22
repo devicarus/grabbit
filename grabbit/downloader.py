@@ -76,8 +76,7 @@ class Downloader:
 
     def _download_media(self, post: Post, url: str, target: Path) -> list[Path]:
         # TODO: Temporary, not sure how to handle this systematically yet
-        if "https://i.imgur.com/removed.png" in self._follow_redirects(url):
-            self._logger.warning(f"Bad link condition triggered")
+        if self._follow_redirects(url) in ["https://i.imgur.com/removed.png", "https://imgur.com/"]:
             return []
 
         match self._get_media_type(post, url):
