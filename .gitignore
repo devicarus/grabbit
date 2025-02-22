@@ -2,8 +2,9 @@
 .ropeproject
 __pycache__
 
-/config.json
-/data
+/*.config.json
+/*.csv
+/out
 /logs
 
 .DS_Store
