@@ -5,10 +5,9 @@ import sys
 from pathlib import Path
 import logging
 
-from praw import Reddit
-
 from app.grabbit import Grabbit
 from app.logger import GrabbitLogger
+from app.typing_custom import RedditUser
 
 def main(args):
     def exit_handler(*_):
@@ -20,17 +19,10 @@ def main(args):
 
     with open(args.user_config, encoding="utf-8") as f:
         config = json.load(f)
-
-    reddit = Reddit(
-        user_agent = "Grabbit - Saved Posts Downloader",
-        client_id = config["client_id"],
-        client_secret = config["client_secret"],
-        username = config["username"],
-        password = config["password"]
-    )
+        user = RedditUser(**config)
 
     logger = GrabbitLogger(level=logging.DEBUG if args.debug else logging.INFO)
-    grabbit = Grabbit(reddit=reddit, logger=logger)
+    grabbit = Grabbit(user=user, logger=logger)
     logger.set_grabbit(grabbit)
     grabbit.init(args.output_directory)
     grabbit.load_post_queue(args.csv)

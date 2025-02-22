@@ -27,3 +27,10 @@ class MediaType(Enum):
     VIDEO = 3
     TEXT = 4
     UNKNOWN = 5
+
+@dataclass
+class RedditUser:
+    username: str
+    password: str
+    client_id: str
+    client_secret: str

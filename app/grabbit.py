@@ -8,8 +8,8 @@ from praw.models import Submission
 from praw import Reddit
 
 from app.downloader import Downloader
-from app.typing_custom import PostId, Post
-from app.utils import load_gdpr_saved_posts_csv
+from app.typing_custom import PostId, Post, RedditUser
+from app.utils import load_gdpr_saved_posts_csv, NullLogger
 
 
 class Grabbit:
@@ -24,11 +24,18 @@ class Grabbit:
     _wd: Path
     added_count = 0
 
-    def __init__(self, reddit: Reddit, logger: Logger):
-        self._reddit = reddit
-        self._logger = logger
+    def __init__(self, user: RedditUser, logger: Logger | None):
+        self._reddit = Reddit(
+            user_agent = "Grabbit - Saved Posts Downloader",
+            username=user.username,
+            password=user.password,
+            client_id = user.client_id,
+            client_secret = user.client_secret
+        )
 
-        self._downloader = Downloader(logger)
+        self._logger = logger if logger else NullLogger()
+
+        self._downloader = Downloader(self._logger)
 
     def init(self, wd: Path) -> None:
         self._logger.info("Initializing Grabbit...")
