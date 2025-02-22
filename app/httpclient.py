@@ -1,10 +1,10 @@
-import requests
-from requests import Request
-from requests.models import Response
-from requests.exceptions import ConnectionError, ReadTimeout
 from time import sleep
 from urllib.parse import urlparse
 from logging import Logger
+
+import requests
+from requests.models import Request, Response
+from requests.exceptions import ConnectionError, ReadTimeout
 
 from app.utils import NullLogger
 
