@@ -128,6 +128,15 @@ class Grabbit:
             }, file, indent=4)
 
     def _to_post(self, submission: Submission) -> Post:
+        try: # TODO: Remove after testing
+            getattr(submission, 'url_overridden_by_dest')
+            if submission.url != submission.url_overridden_by_dest:
+                self._logger.warning("url_overridden_by_dest != url")
+                self._logger.debug(f"url_overridden_by_dest: {submission.url_overridden_by_dest}")
+                self._logger.debug(f"url: {submission.url}")
+        except AttributeError:
+            pass
+
         url: str = getattr(submission, 'url_overridden_by_dest', submission.url)
 
         data: list[str] = []
