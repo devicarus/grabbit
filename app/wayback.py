@@ -35,14 +35,15 @@ class WaybackList:
     def _get_next_url(self) -> str:
         current = self._current
         self._current += 1
-        
+
+        # If the url is not an image, check if it has a media source and add it to the list
         response = self._http_client.get(self._urls[current])
-        
-        if guess_media_type(response) != MediaType.UNKNOWN: # No need for more processing if it's a direct media hit
-            return self._urls[current]
-        
-        media = self._get_media_url(response) # TODO: If this is used, push the original URL as next
-        return media if media else self._urls[current]
+        if guess_media_type(response) == MediaType.UNKNOWN:
+            media = self._get_media_url(response)
+            if media:
+                self._urls.insert(current + 1, media)
+
+        return self._urls[current]
 
     @staticmethod
     def _get_media_url(response: Response) -> Optional[str]:
