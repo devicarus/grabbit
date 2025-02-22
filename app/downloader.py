@@ -61,6 +61,7 @@ class Downloader:
             urls = self._wayback.get(post.url)
             for (count, url) in enumerate(urls):
                 self._logger.debug(f"Attempting wayback machine download {count + 1}/{len(urls)}: {url}")
+                # noinspection PyTypeChecker
                 files = self._download_media(post, url, target)
                 if len(files) > 0:
                     return files

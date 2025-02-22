@@ -56,6 +56,7 @@ class Grabbit:
     def load_post_queue(self, csv_path: Optional[Path]) -> None:
         if csv_path:
             self._logger.info(f"Getting post queue from file {csv_path}")
+            # noinspection PyTypeChecker
             self._submissionQueue = self._reddit.info(fullnames=load_gdpr_saved_posts_csv(csv_path))
         else:
             self._logger.info("Getting post queue from Reddit")
@@ -116,6 +117,7 @@ class Grabbit:
     @staticmethod
     def _save_metadata(post: Post, files: list[Path], target: Path) -> None:
         with open(target.with_suffix(".json"), "w", encoding="utf-8") as file:
+            # noinspection PyTypeChecker
             json.dump({
                 "id": post.id,
                 "sub": post.sub,
@@ -180,6 +182,7 @@ class Grabbit:
 
     def _save(self):
         with open(self._wd / "db.json", "w", encoding="utf-8") as file:
+            # noinspection PyTypeChecker
             json.dump({
                 "downloaded": list(self.downloaded_posts),
                 "failed": list(self.failed_downloads)
