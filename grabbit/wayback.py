@@ -39,23 +39,16 @@ class WaybackList:
         # If the url is not an image, check if it has a media source and add it to the list
         response = self._http_client.get(self._urls[current])
         if guess_media_type(response) == MediaType.UNKNOWN:
-            media = self._get_media_url(response)
-            if media:
-                self._urls.insert(current + 1, media)
+            media_sources = self._get_media_sources(response)
+            if len(media_sources) > 0:
+                self._urls = self._urls[:current+1] + media_sources + self._urls[current+1:]
 
         return self._urls[current]
 
     @staticmethod
-    def _get_media_url(response: Response) -> Optional[str]:
-        match = re.findall(r'(?<=source src=")[^"]+(?=")', response.text)
-        if not match: return None
-        
-        if len(match) > 1:
-            raise Exception("More than one source found")
-        if not match[0].startswith("//"):
-            raise Exception("Source URL does not start with //")
-            
-        return "https:" + match[0]
+    def _get_media_sources(response: Response) -> list[str]:
+        matches = re.findall(r'(?<=source src=")[^"]+(?=")', response.text)
+        return ["https:" + url if url.startswith("//") else url for url in matches]
         
     # TODO: Refactor this method
     def _get_urls(self, url: str) -> list[str]:
