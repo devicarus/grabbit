@@ -45,14 +45,14 @@ class Downloader:
 
     def download(self, post: Post, target: Path) -> list[Path]:
         if post.url:
-            self._logger.debug("Attempting regular download")
+            self._logger.debug("Attempting regular download: {post.url}")
             files = self._download_media(post, post.url, target)
             if len(files) > 0:
                 return files
 
             redirected_url = self._follow_redirects(post.url)
             if redirected_url != post.url:
-                self._logger.debug("Attempting download from redirected URL")
+                self._logger.debug("Attempting download from redirected URL: {redirected_url}")
                 files = self._download_media(post, redirected_url, target)
                 if len(files) > 0:
                     return files
@@ -67,7 +67,7 @@ class Downloader:
                     return files
 
         if post.url_preview and post.source in self._sources["image"] and len(post.data) <= 1:
-            self._logger.debug("Attempting downloading cashed Reddit image")
+            self._logger.debug("Attempting downloading cashed Reddit image: {post.url_preview}")
             files = self._download_media(post, post.url_preview, target)
             if len(files) > 0:
                 return files
