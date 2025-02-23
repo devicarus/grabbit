@@ -16,18 +16,18 @@ from grabbit.typing_custom import RedditUser
 @click.option(
     "--debug", "-d",
     is_flag = True,
-    help = "to activate debug mode",
+    help = "Turn on activate debug mode.",
 )
 @click.option(
     "--csv",
     metavar="FILENAME",
     type = Path,
-    help = "load Reddit GDPR saved posts export CSV file",
+    help = "Use Reddit GDPR saved posts export CSV file.",
 )
 @click.option(
     "--skip-failed",
     is_flag = True,
-    help = "skip previously failed downloads",
+    help = "Skip previously failed downloads.",
 )
 def cli(output_dir: Path, user_config: Path, debug: bool, csv: Path, skip_failed: bool):
     """
