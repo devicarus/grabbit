@@ -14,13 +14,13 @@ class RetryLimitExceededException(Exception):
 class HTTPClient:
     _headers: dict[str, str]
     _logger: Logger
-    _backoff_factor: float = 0.3
+    _backoff_factor: float = 0.5
     
     def __init__(self, headers: dict | None = None, logger: Logger | None = None):
         self._headers = headers if headers is not None else {}
         self._logger = logger if logger is not None else NullLogger()
 
-    def request(self, method: str, url: str, params: dict | None = None, max_retries: int = 3, timeout: int = 30, **kwargs) -> Response:
+    def request(self, method: str, url: str, params: dict | None = None, max_retries: int = 5, timeout: int = 30, **kwargs) -> Response:
         retry_count = 0
         while retry_count < max_retries:
             try:
