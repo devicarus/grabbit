@@ -6,32 +6,27 @@ import os
 from grabbit.grabbit import Grabbit
 
 class GrabbitFormatter(logging.Formatter):
-    _red = "\x1b[31m"
-    _yellow = "\x1b[33m"
-    _green = "\x1b[32m"
-    _blue = "\x1b[34m"
-    _reset = "\x1b[0m"
-    _format = '%(asctime)s [T: %(total)d][A: %(added)d][%(levelname)s]: %(message)s'
-
-    COLORS = {
-        logging.DEBUG: _blue,
-        logging.INFO: _green,
-        logging.WARNING: _yellow,
-        logging.ERROR: _red,
-        logging.CRITICAL: _red
+    _COLORS = {
+        logging.DEBUG: "\x1b[34m",   # Blue
+        logging.INFO: "\x1b[32m",    # Green
+        logging.WARNING: "\x1b[33m", # Yellow
+        logging.ERROR: "\x1b[31m",   # Red
+        logging.CRITICAL: "\x1b[31m" # Red
     }
+    _RESET = "\x1b[0m"
+    _FORMAT = '%(asctime)s [T: %(total)d][A: %(added)d][%(levelname)s]: %(message)s'
 
     _use_color: bool
 
     def __init__(self, use_color: bool = True):
-        super().__init__(self._format)
+        super().__init__(self._FORMAT)
         self._use_color = use_color
 
     def format(self, record: logging.LogRecord):
         record_copy = copy(record)
         if self._use_color:
-            color = self.COLORS.get(record.levelno)
-            record_copy.levelname = f"{color}{record.levelname}{self._reset}"
+            color = self._COLORS.get(record.levelno)
+            record_copy.levelname = f"{color}{record.levelname}{self._RESET}"
         return super().format(record_copy)
 
 
