@@ -25,17 +25,13 @@ class HTTPClient:
         while retry_count < max_retries:
             try:
                 return requests.request(method, url, headers=self._headers, params=params if params is not None else {}, timeout=timeout, **kwargs)
-            except ConnectionError as e:
+            except (ConnectionError, ReadTimeout) as e:
                 if urlparse(url).hostname == "web.archive.org" and 'Errno 61' in str(e):
                     self._logger.debug("Wayback Machine has overheated, cooling off for a minute...")
                     sleep(61)
-                else:
-                    raise
-            except ReadTimeout:
-                self._logger.debug(f"Request timed out, retrying in {self._backoff_factor * (2 ** retry_count)} seconds")
-                sleep(self._backoff_factor * (2 ** retry_count))
 
             retry_count += 1
+            sleep(self._backoff_factor * (2 ** retry_count))
         raise RetryLimitExceededException(f"Failed to fetch data from {url} after {max_retries} retries")
         
     def get(self, url: str, params: dict | None = None, **kwargs) -> Response:
