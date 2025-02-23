@@ -8,13 +8,12 @@ from praw.models import Submission
 from praw import Reddit
 
 from grabbit.downloader import Downloader
-from grabbit.typing_custom import PostId, Post, RedditUser
+from grabbit.typing_custom import PostId, Post, RedditUser, PostStatus
 from grabbit.utils import load_gdpr_saved_posts_csv, NullLogger
 
 
 class Grabbit:
-    downloaded_posts: set[PostId] = set()
-    failed_downloads: set[PostId] = set()
+    posts: dict[PostId, PostStatus] = {}
 
     _submissionQueue: list[Submission] = []
 
@@ -45,10 +44,8 @@ class Grabbit:
         self._logger.info("Checking for existing data...")
         self._load()
 
-        if len(self.downloaded_posts) > 0:
-            self._logger.info(f"Loaded IDs of {len(self.downloaded_posts)} downloaded posts")
-        if len(self.failed_downloads) > 0:
-            self._logger.info(f"Loaded IDs of {len(self.failed_downloads)} failed downloads")
+        if len(self.posts) > 0:
+            self._logger.info(f"Loaded status of {len(self.posts)} posts")
 
     def exit(self) -> None:
         self._save()
@@ -65,15 +62,17 @@ class Grabbit:
     def download_queue(self, skip_failed: bool = False) -> None:
         self._logger.info("Starting download process...")
         for submission in self._submissionQueue:
-            if submission.id in self.downloaded_posts:
-                self._logger.info(
-                    f"Skipping post {submission.id} from r/{submission.subreddit.display_name} - already downloaded")
-                continue
-
-            if skip_failed and submission.id in self.failed_downloads:
-                self._logger.info(
-                    f"Skipping post {submission.id} from r/{submission.subreddit.display_name} - previously failed")
-                continue
+            if submission.id in self.posts:
+                match self.posts[submission.id]:
+                    case PostStatus.DOWNLOADED:
+                        self._logger.info(f"Skipping post {submission.id} from r/{submission.subreddit.display_name} - already downloaded")
+                        continue
+                    case PostStatus.SKIPPED:
+                        self._logger.info(f"Skipping post {submission.id} from r/{submission.subreddit.display_name} - no valid data to work with")
+                        continue
+                    case PostStatus.FAILED if skip_failed:
+                        self._logger.info(f"Skipping post {submission.id} from r/{submission.subreddit.display_name} - previously failed")
+                        continue
 
             self._logger.debug(f"Parsing submission {submission.id} from r/{submission.subreddit.display_name} (https://reddit.com{submission.permalink})")
             original_submission = self._fix_crosspost(submission)
@@ -82,7 +81,7 @@ class Grabbit:
             self._logger.debug(post)
             if not post.good():
                 self._logger.info(f"Skipping post {post.id} from r/{post.sub} - no valid data to work with")
-                self.failed_downloads.add(post.id)
+                self.posts[post.id] = PostStatus.SKIPPED
                 continue
 
             self._logger.debug(f"Attempting to download post {post.id} from r/{post.sub}")
@@ -94,17 +93,14 @@ class Grabbit:
             files = self._downloader.download(post, target)
             if len(files) == 0:
                 self._logger.info(f"❌ Failed to download post {post.id} from r/{post.sub}")
-                self.failed_downloads.add(post.id)
+                self.posts[post.id] = PostStatus.FAILED
                 continue
 
             self._save_metadata(post, files, target)
 
-            if not skip_failed and submission.id in self.failed_downloads:
-                self.failed_downloads.remove(submission.id)
-
-            self.downloaded_posts.add(original_submission.id)
+            self.posts[original_submission.id] = PostStatus.DOWNLOADED
             if submission.id != original_submission.id: # If the post is a crosspost, add the crosspost id as well
-                self.downloaded_posts.add(submission.id)
+                self.posts[submission.id] = PostStatus.DOWNLOADED
 
             self.added_count += 1
             self._logger.info(f"✅ Downloaded post {post.id} from r/{post.sub}")
@@ -192,16 +188,12 @@ class Grabbit:
     def _save(self):
         with open(self._wd / "db.json", "w", encoding="utf-8") as file:
             # noinspection PyTypeChecker
-            json.dump({
-                "downloaded": list(self.downloaded_posts),
-                "failed": list(self.failed_downloads)
-            }, file, indent=4)
+            json.dump(self.posts, file, indent=4)
 
     def _load(self):
         try:
             with open(self._wd / "db.json", "r", encoding="utf-8") as file:
                 data = json.load(file)
-                self.downloaded_posts = set(data["downloaded"])
-                self.failed_downloads = set(data["failed"])
+                self.posts = dict(data)
         except FileNotFoundError:
             pass

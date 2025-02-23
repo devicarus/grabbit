@@ -34,3 +34,8 @@ class RedditUser:
     password: str
     client_id: str
     client_secret: str
+
+class PostStatus(str, Enum):
+    DOWNLOADED = "downloaded"
+    SKIPPED = "skipped"
+    FAILED = "failed"
