@@ -4,9 +4,13 @@
 
 > A Reddit saved post media and metadata downloader.
 
-</div>
+---
+
+🚧 **This project is still under heavy development and may not work as expected** 🚧
 
 ---
+
+</div>
 
 ## 📥 Installation (recommended)
 
@@ -33,7 +37,7 @@ pipx install git+https://github.com/devicarus/grabbit.git
 
 ## 🚀 Usage
 
-```bash
+```
 > grabbit --help
 
 Usage: grabbit [OPTIONS] OUTPUT_DIR USER_CONFIG
@@ -54,6 +58,12 @@ Options:
 - [ffmpeg](https://ffmpeg.org/download.html) (optional, video downloads *may* not work properly without it)
 
 ## ❓ FAQ
+
 ### Grabbit is only downloading the latest ~1k saved posts
 Reddit's API only allows access to the latest circa 1000 saved posts.\
 To download all saved posts, you can [request your Reddit data](https://www.reddit.com/settings/data-request) and use the `--csv` option with the exported CSV file.
+
+### What does Grabbit download?
+Grabbit downloads (*or at least tries to*) all media from saved posts, including images and videos, as well as metadata such as title, author's username and text if there is any.\
+Grabbit **does not** download comments.\
+Grabbit **is not** intended for backing up entire subreddits or other users' profiles.
