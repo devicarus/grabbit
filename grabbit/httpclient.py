@@ -26,7 +26,7 @@ class HTTPClient:
             try:
                 return requests.request(method, url, headers=self._headers, params=params if params is not None else {}, timeout=timeout, **kwargs)
             except ConnectionError as e:
-                if isinstance(e.request, Request) and urlparse(e.request.url).hostname == "web.archive.org" and 'Errno 61' in str(e):
+                if urlparse(url).hostname == "web.archive.org" and 'Errno 61' in str(e):
                     self._logger.debug("Wayback Machine has overheated, cooling off for a minute...")
                     retry_count += 1
                     sleep(61)
