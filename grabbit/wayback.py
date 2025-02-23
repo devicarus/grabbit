@@ -1,5 +1,4 @@
 import re
-from typing import Optional
 
 from requests.models import Response
 

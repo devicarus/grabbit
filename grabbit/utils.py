@@ -2,7 +2,6 @@ import csv
 from mimetypes import guess_extension
 from pathlib import Path
 from typing import Optional
-
 from logging import Logger
 
 from requests.models import Response
