@@ -31,7 +31,7 @@ class GrabbitFormatter(logging.Formatter):
 
 
 class GrabbitLogger(logging.Logger):
-    geddit: Grabbit
+    _geddit: Grabbit
 
     def __init__(self, level = logging.INFO):
         super().__init__("GrabbitLogger", level)
@@ -55,12 +55,12 @@ class GrabbitLogger(logging.Logger):
         self.addHandler(file_handler)
 
     def set_grabbit(self, geddit: Grabbit):
-        self.geddit = geddit
+        self._geddit = geddit
 
     def _get_extra(self):
         return {
-            "total": len(self.geddit.posts),
-            "added": self.geddit.added_count
+            "total": self._geddit.total_posts(),
+            "added": self._geddit.added_posts()
         }
 
     def critical(self, msg, *args, **kwargs):
