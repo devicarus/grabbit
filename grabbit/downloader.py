@@ -150,10 +150,8 @@ class Downloader:
 
     def _download_video(self, url: str, target: Path, max_retries: int = 2) -> Optional[Path]:
         with YoutubeDL({
-            "quiet": True,
-            "nocheckcertificate": True,  # TODO: Try without this
             "outtmpl": f"{target}.%(ext)s",
-            "logger": NullLogger()  # TODO: May be redundant?
+            "logger": NullLogger()
         }) as ydl:
             retry_count = 0
             while retry_count < max_retries:
