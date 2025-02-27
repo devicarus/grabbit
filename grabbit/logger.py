@@ -31,7 +31,7 @@ class GrabbitFormatter(logging.Formatter):
 
 
 class GrabbitLogger(logging.Logger):
-    _geddit: Grabbit
+    _geddit: Grabbit = None
 
     def __init__(self, level = logging.INFO):
         super().__init__("GrabbitLogger", level)
@@ -58,6 +58,12 @@ class GrabbitLogger(logging.Logger):
         self._geddit = geddit
 
     def _get_extra(self):
+        if self._geddit is None:
+            return {
+                "total": 0,
+                "added": 0
+            }
+
         return {
             "total": self._geddit.total_posts(),
             "added": self._geddit.added_posts()

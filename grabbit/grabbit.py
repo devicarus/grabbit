@@ -6,6 +6,7 @@ import json
 
 from praw.models import Submission
 from praw import Reddit
+from prawcore import OAuthException
 
 from grabbit.downloader import Downloader
 from grabbit.typing_custom import PostId, Post, RedditUser, PostStatus
@@ -36,31 +37,34 @@ class Grabbit:
 
         self._downloader = Downloader(self._logger)
 
+    def logged_in(self):
+        try:
+            self._reddit.user.me()
+            return True
+        except OAuthException:
+            return False
+
     def init(self, wd: Path) -> None:
-        self._logger.info("Initializing Grabbit...")
+        self._logger.debug("Initializing Grabbit working directory")
         self._wd = wd
         self._wd.mkdir(parents=True, exist_ok=True)
 
-        self._logger.info("Checking for existing data...")
+        self._logger.debug("Checking for existing data")
         self._load()
-
-        if len(self._posts) > 0:
-            self._logger.info(f"Loaded status of {len(self._posts)} posts")
 
     def exit(self) -> None:
         self._save()
 
     def load_post_queue(self, csv_path: Optional[Path]) -> None:
         if csv_path:
-            self._logger.info(f"Getting post queue from file {csv_path}")
             # noinspection PyTypeChecker
             self._submissionQueue = self._reddit.info(fullnames=load_gdpr_saved_posts_csv(csv_path))
+            self._logger.info(f"Loaded post queue from file {csv_path}")
         else:
-            self._logger.info("Getting post queue from Reddit")
             self._submissionQueue = self._reddit.user.me().saved(limit=None)
+            self._logger.info("Loaded post queue from Reddit (Saved Posts)")
 
     def download_queue(self, skip_failed: bool = False) -> None:
-        self._logger.info("Starting download process...")
         for submission in self._submissionQueue:
             if submission.id in self._posts:
                 match self._posts[submission.id]:
