@@ -1,3 +1,5 @@
+""" This module contains the Downloader class. """
+
 from __future__ import unicode_literals
 from pathlib import Path
 from time import sleep
@@ -16,6 +18,7 @@ from grabbit.httpclient import HTTPClient, RetryLimitExceededException
 
 
 class Downloader:
+    """ Handles downloading media from Reddit. """
     _headers = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:135.0) Gecko/20100101 Firefox/135.0"}
 
     _sources = {
@@ -44,6 +47,7 @@ class Downloader:
         self._wayback = Wayback(self._http_client)
 
     def download(self, post: Post, target: Path) -> list[Path]:
+        """ Attempts to download the media from the post. """
         if post.url:
             self._logger.debug(f"Attempting regular download: {post.url}")
             files = self._download_media(post, post.url, target)
@@ -82,11 +86,13 @@ class Downloader:
 
         match self._get_media_type(post, url):
             case MediaType.IMAGE:
-                return (lambda x: [x] if x else [])(self._download_generic_image(url, target))
+                path = self._download_generic_image(url, target)
+                return [path] if path is not None else []
             case MediaType.GALLERY:
                 return self._download_album(post.data, target)
             case MediaType.VIDEO:
-                return (lambda x: [x] if x else [])(self._download_video(url, target))
+                path = self._download_video(url, target)
+                return [path] if path is not None else []
             case MediaType.TEXT:
                 return [self._download_text(post.data, target)]
 
@@ -111,16 +117,12 @@ class Downloader:
 
         self._logger.debug("Unknown source, trying to guess post format")
         response = self._http_client.head(url, allow_redirects=True)
-        match guess_media_type(response):
-            case MediaType.IMAGE:
-                self._logger.debug("Guessed format as image")
-                return MediaType.IMAGE
-            case MediaType.VIDEO:
-                self._logger.debug("Guessed format as video")
-                return MediaType.VIDEO
-            case _:
-                self._logger.debug("Failed to guess post format")
-                return MediaType.UNKNOWN
+        guess = guess_media_type(response)
+        if guess is MediaType.UNKNOWN:
+            self._logger.debug("Failed to guess post format")
+        else:
+            self._logger.debug("Guessed format as %s", guess.name.lower())
+        return guess
 
     def _download_generic_image(self, url: str, target: Path) -> Optional[Path]:
         with self._http_client.get(url, stream=True) as response:
@@ -158,9 +160,12 @@ class Downloader:
                 self._logger.debug("Attempting download using YTDL")
                 try:
                     status = ydl.download([url])
-                    if status != 0: self._logger.warning("YTDL exited with non-zero status, but no exception was raised")
+                    if status != 0:
+                        self._logger.warning("YTDL exited with non-zero status, but no exception was raised")
+
                     filename = next((file for file in target.parent.iterdir() if file.stem == target.stem and file.suffix != ".json"), None)
-                    if filename is None: self._logger.warning("YTDL exited with zero status, but no file was found")
+                    if filename is None:
+                        self._logger.warning("YTDL exited with zero status, but no file was found")
                     return filename
                 except Exception as e:
                     if isinstance(e, DownloadError):

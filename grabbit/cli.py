@@ -1,3 +1,5 @@
+""" This module contains the CLI for Grabbit. """
+
 import json
 import signal
 import sys
@@ -52,7 +54,7 @@ def cli(output_dir: Path, user_config: Path, debug: bool, csv: Path, skip_failed
     if not grabbit.logged_in():
         logger.error("Failed to log in to Reddit, check your credentials")
         sys.exit(1)
-    logger.info(f"Logged in to Reddit as user {user.username}")
+    logger.info("Logged in to Reddit as user %s", user.username)
 
     logger.set_grabbit(grabbit)
     signal.signal(signal.SIGINT, exit_handler)

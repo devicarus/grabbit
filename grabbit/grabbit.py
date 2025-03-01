@@ -1,3 +1,5 @@
+""" This module contains the main Grabbit class."""
+
 from mimetypes import guess_extension
 from pathlib import Path
 from typing import Optional
@@ -14,6 +16,7 @@ from grabbit.utils import load_gdpr_saved_posts_csv, NullLogger
 
 
 class Grabbit:
+    """ The main Grabbit class. """
     _posts: dict[PostId, PostStatus] = {}
 
     _submissionQueue: list[Submission] = []
@@ -38,6 +41,7 @@ class Grabbit:
         self._downloader = Downloader(self._logger)
 
     def logged_in(self):
+        """ Returns True if the user credentials are correct, False otherwise. """
         try:
             self._reddit.user.me()
             return True
@@ -45,6 +49,7 @@ class Grabbit:
             return False
 
     def init(self, wd: Path) -> None:
+        """ Initializes the Grabbit instance. """
         self._logger.debug("Initializing Grabbit working directory")
         self._wd = wd
         self._wd.mkdir(parents=True, exist_ok=True)
@@ -53,42 +58,45 @@ class Grabbit:
         self._load()
 
     def exit(self) -> None:
+        """ Saves the current state of the Grabbit instance. """
         self._save()
 
     def load_post_queue(self, csv_path: Optional[Path]) -> None:
+        """ Loads the post queue for download from the specified CSV file, or from Reddit if no file is specified. """
         if csv_path:
             # noinspection PyTypeChecker
             self._submissionQueue = self._reddit.info(fullnames=load_gdpr_saved_posts_csv(csv_path))
-            self._logger.info(f"Loaded post queue from file {csv_path}")
+            self._logger.info("Loaded post queue from file %s", csv_path)
         else:
             self._submissionQueue = self._reddit.user.me().saved(limit=None)
             self._logger.info("Loaded post queue from Reddit (Saved Posts)")
 
     def download_queue(self, skip_failed: bool = False) -> None:
+        """ Downloads the entire post queue. """
         for submission in self._submissionQueue:
             if submission.id in self._posts:
                 match self._posts[submission.id]:
                     case PostStatus.DOWNLOADED:
-                        self._logger.info(f"Skipping post {submission.id} from r/{submission.subreddit.display_name} - already downloaded")
+                        self._logger.info("Skipping post %s from r/%s - already downloaded", submission.id, submission.subreddit.display_name)
                         continue
                     case PostStatus.SKIPPED:
-                        self._logger.info(f"Skipping post {submission.id} from r/{submission.subreddit.display_name} - no valid data to work with")
+                        self._logger.info("Skipping post %s from r/%s - no valid data to work with", submission.id, submission.subreddit.display_name)
                         continue
                     case PostStatus.FAILED if skip_failed:
-                        self._logger.info(f"Skipping post {submission.id} from r/{submission.subreddit.display_name} - previously failed")
+                        self._logger.info("Skipping post %s from r/%s - previously failed", submission.id, submission.subreddit.display_name)
                         continue
 
-            self._logger.debug(f"Parsing submission {submission.id} from r/{submission.subreddit.display_name} (https://reddit.com{submission.permalink})")
+            self._logger.debug("Parsing submission %s from r/%s (https://reddit.com%s)", submission.id, submission.subreddit.display_name, submission.permalink)
             original_submission = self._fix_crosspost(submission)
             post = self._to_post(original_submission)
 
             self._logger.debug(post)
             if not post.good():
-                self._logger.info(f"Skipping post {post.id} from r/{post.sub} - no valid data to work with")
+                self._logger.info("Skipping post %s from r/%s - no valid data to work with", post.id, post.sub)
                 self._posts[post.id] = PostStatus.SKIPPED
                 continue
 
-            self._logger.debug(f"Attempting to download post {post.id} from r/{post.sub}")
+            self._logger.debug("Attempting to download post %s from r/%s", post.id, post.sub)
 
             target = self._wd / post.sub
             target.mkdir(parents=True, exist_ok=True)
@@ -96,7 +104,7 @@ class Grabbit:
 
             files = self._downloader.download(post, target)
             if len(files) == 0:
-                self._logger.info(f"❌ Failed to download post {post.id} from r/{post.sub}")
+                self._logger.info("❌ Failed to download post %s from r/%s", post.id, post.sub)
                 self._posts[post.id] = PostStatus.FAILED
                 continue
 
@@ -107,7 +115,7 @@ class Grabbit:
                 self._posts[submission.id] = PostStatus.DOWNLOADED
 
             self._added_count += 1
-            self._logger.info(f"✅ Downloaded post {post.id} from r/{post.sub}")
+            self._logger.info("✅ Downloaded post %s from r/%s", post.id, post.sub)
 
             if self._added_count % 10 == 0:
                 self._save()
@@ -115,9 +123,11 @@ class Grabbit:
         self._save()
 
     def total_posts(self):
+        """ Returns the total number of posts in the database. """
         return len(self._posts)
 
     def added_posts(self):
+        """ Returns the number of posts added to the database by the Grabbit instance. """
         return self._added_count
 
     @staticmethod
@@ -138,10 +148,10 @@ class Grabbit:
             getattr(submission, 'url_overridden_by_dest')
             if submission.url != submission.url_overridden_by_dest:
                 self._logger.warning("url_overridden_by_dest != url")
-                self._logger.debug(f"url_overridden_by_dest: {submission.url_overridden_by_dest}")
-                self._logger.debug(f"url: {submission.url}")
+                self._logger.debug("url_overridden_by_dest: %s", submission.url_overridden_by_dest)
+                self._logger.debug("url: %s", submission.url)
         except AttributeError:
-            pass
+            self._logger.warning("url_overridden_by_dest not on Submission")
 
         url: str = getattr(submission, 'url_overridden_by_dest', submission.url)
 
@@ -183,7 +193,7 @@ class Grabbit:
             try:
                 img = getattr(submission, "media_metadata")[media_id]
             except AttributeError:
-                self._logger.warning(f"Media metadata missing for media_id {media_id}")
+                self._logger.warning("Media metadata missing for media_id %s", media_id)
                 continue
 
             extension = guess_extension(img["m"], strict=False).removeprefix(".")

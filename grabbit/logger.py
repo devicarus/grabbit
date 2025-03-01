@@ -1,3 +1,5 @@
+""" This module contains custom logging classes for Grabbit. """
+
 import logging
 from copy import copy
 from datetime import datetime
@@ -5,13 +7,15 @@ import os
 
 from grabbit.grabbit import Grabbit
 
+
 class GrabbitFormatter(logging.Formatter):
+    """ Custom formatter for GrabbitLogger """
     _COLORS = {
-        logging.DEBUG: "\x1b[34m",   # Blue
-        logging.INFO: "\x1b[32m",    # Green
-        logging.WARNING: "\x1b[33m", # Yellow
-        logging.ERROR: "\x1b[31m",   # Red
-        logging.CRITICAL: "\x1b[31m" # Red
+        logging.DEBUG: "\x1b[34m",  # Blue
+        logging.INFO: "\x1b[32m",  # Green
+        logging.WARNING: "\x1b[33m",  # Yellow
+        logging.ERROR: "\x1b[31m",  # Red
+        logging.CRITICAL: "\x1b[31m"  # Red
     }
     _RESET = "\x1b[0m"
     _FORMAT = '%(asctime)s [T: %(total)d][A: %(added)d][%(levelname)s]: %(message)s'
@@ -31,9 +35,10 @@ class GrabbitFormatter(logging.Formatter):
 
 
 class GrabbitLogger(logging.Logger):
+    """ Custom logger for Grabbit """
     _geddit: Grabbit = None
 
-    def __init__(self, level = logging.INFO):
+    def __init__(self, level=logging.INFO):
         super().__init__("GrabbitLogger", level)
         self.extra_info = None
 
@@ -55,6 +60,7 @@ class GrabbitLogger(logging.Logger):
         self.addHandler(file_handler)
 
     def set_grabbit(self, geddit: Grabbit):
+        """ Set the Grabbit instance to get extra info from """
         self._geddit = geddit
 
     def _get_extra(self):
