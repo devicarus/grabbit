@@ -15,9 +15,9 @@ class WaybackList:
 
     _http_client: HTTPClient
 
-    def __init__(self, http_client: HTTPClient, url: str):
+    def __init__(self, http_client: HTTPClient, urls: list[str]):
         self._http_client = http_client
-        self._urls = self._get_urls(url)
+        self._urls = urls
 
     def __iter__(self):
         return self
@@ -51,32 +51,12 @@ class WaybackList:
         matches = re.findall(r'(?<=source src=")[^"]+(?=")', response.text)
         return ["https:" + url if url.startswith("//") else url for url in matches]
 
-    # TODO: Refactor this method
-    def _get_urls(self, url: str) -> list[str]:
-        wb_api = "https://web.archive.org/cdx/search/cdx"
-        wb_src = "https://web.archive.org/web"
-
-        params = {
-            "url": url,
-            "output": "json",
-            "gzip": False,
-            "fl": "timestamp,statuscode",
-            "collapse": "digest",
-        }
-        response = self._http_client.get(wb_api, params)
-
-        captures = response.json()
-        urls = []
-        if len(captures) != 0:
-            stamps = captures[1:]
-            stamps = [stamp for stamp in stamps if stamp[1].isdigit()]
-            stamps = sorted(stamps, key = lambda x: int(x[1]))
-            urls = [f"{wb_src}/{stamp[0]}/{url}" for stamp in stamps][:3]
-
-        return urls
 
 class Wayback:
     """ A class for interacting with the Wayback Machine. """
+    _api_url: str = "https://web.archive.org/cdx/search/cdx"
+    _src_url: str = "https://web.archive.org/web"
+
     _http_client: HTTPClient
 
     def __init__(self, http_client: HTTPClient):
@@ -84,4 +64,19 @@ class Wayback:
 
     def get(self, url: str) -> WaybackList:
         """ Returns a list of Wayback URLs for the specified URL. """
-        return WaybackList(self._http_client, url)
+        return WaybackList(self._http_client, self._get_urls(url))
+
+    def _get_urls(self, url: str) -> list[str]:
+        params = {
+            "url": url,
+            "output": "json",
+            "fl": "timestamp,statuscode"
+        }
+        captures = self._http_client.get(self._api_url, params).json()
+
+        if len(captures) == 0:
+            return []
+        del captures[0] # Remove the header
+
+        stamps: list[str] = [capture[0] for capture in captures if capture[1].isdigit()]
+        return [f"{self._src_url}/{stamp}/{url}" for stamp in sorted(stamps)]
