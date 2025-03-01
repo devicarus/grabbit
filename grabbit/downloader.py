@@ -63,6 +63,8 @@ class Downloader:
 
             self._logger.debug("Attempting download from Wayback Machine")
             urls = self._wayback.get(post.url)
+            if len(urls) == 0:
+                self._logger.debug("No Wayback Machine captures found")
             for (count, url) in enumerate(urls):
                 self._logger.debug(f"Attempting wayback machine download {count + 1}/{len(urls)}: {url}")
                 # noinspection PyTypeChecker
