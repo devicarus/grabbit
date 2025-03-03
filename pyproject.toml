@@ -17,6 +17,10 @@ dependencies = [
 [tool.poetry.scripts]
 grabbit = 'grabbit.cli:cli'
 
+[tool.poetry.group.test.dependencies]
+pytest = "^8.3.4"
+flexmock = "^0.12.2"
+
 [tool.poetry.group.dev.dependencies]
 pylint = "^3.3.4"
 
