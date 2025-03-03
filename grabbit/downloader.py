@@ -152,13 +152,13 @@ class Downloader:
 
         return target
 
-    def _download_video(self, url: str, target: Path, max_retries: int = 2) -> Optional[Path]:
+    def _download_video(self, url: str, target: Path, max_tries: int = 3) -> Optional[Path]:
         with YoutubeDL({
             "outtmpl": f"{target}.%(ext)s",
             "logger": NullLogger()
         }) as ydl:
             retry_count = 0
-            while retry_count < max_retries:
+            while retry_count < max_tries:
                 self._logger.debug("Attempting download using YTDL")
                 try:
                     status = ydl.download([url])
@@ -181,7 +181,7 @@ class Downloader:
                             return None
 
                         retry_count += 1
-                        if retry_count < max_retries:
+                        if retry_count < max_tries:
                             if urlparse(url).hostname == "web.archive.org" and e.msg and 'Errno 61' in e.msg:
                                 self._logger.debug("Rate limited, cooling off for a minute")
                                 sleep(61)
@@ -209,7 +209,7 @@ class Downloader:
 
     def _follow_redirects(self, url: str) -> str:
         try:
-            response = self._http_client.head(url, allow_redirects=True, timeout=10, max_retries=1)
+            response = self._http_client.head(url, allow_redirects=True, timeout=10, max_tries=1)
             response.raise_for_status()
             return response.url.split("?")[0]
         except (RetryLimitExceededException, HTTPError):
