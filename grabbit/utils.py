@@ -30,10 +30,15 @@ def load_gdpr_saved_posts_csv(path: Path) -> list[PostId]:
     """ Loads post ids from the GDPR Saved Posts CSV file """
     with open(path, encoding="utf-8") as file:
         reader = csv.reader(file)
-        ids = [row[0] if row[0].startswith("t3_") else f"t3_{row[0]}" for row in reader]
+        ids = [ensure_post_id(row[0]) for row in reader]
         del ids[0]
     return ids
 
+def ensure_post_id(post_id_like: str) -> PostId:
+    """ Makes sure the post id is prefixed with "t3_" """
+    if post_id_like.startswith("t3_"):
+        return post_id_like
+    return f"t3_{post_id_like}"
 
 class NullLogger(Logger):
     """ A logger that logs nothing """
