@@ -1,5 +1,6 @@
 """ This module contains the main Grabbit class."""
 
+from json import JSONDecodeError
 from mimetypes import guess_extension
 from pathlib import Path
 from typing import Optional
@@ -215,5 +216,5 @@ class Grabbit:
             with open(self._wd / "db.json", "r", encoding="utf-8") as file:
                 data = json.load(file)
                 self._posts = dict(data)
-        except FileNotFoundError:
+        except (FileNotFoundError, JSONDecodeError):
             pass
