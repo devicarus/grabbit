@@ -1,12 +1,12 @@
 """ Tests for the HTTPClient class """
 # @generated [partially] GPT-4o: Prompt: Write pytest unit tests for the HTTPClient class. Use flexmock where appropriate.
 
-import pytest
-from flexmock import flexmock
-
 import time
 import requests
 from requests.models import Response
+
+import pytest
+from flexmock import flexmock
 
 from grabbit.httpclient import HTTPClient, RetryLimitExceededException
 
