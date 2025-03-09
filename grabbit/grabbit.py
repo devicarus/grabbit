@@ -3,7 +3,7 @@
 from json import JSONDecodeError
 from mimetypes import guess_extension
 from pathlib import Path
-from typing import Optional
+from typing import Iterator
 from logging import Logger
 import json
 
@@ -19,8 +19,6 @@ from grabbit.utils import load_gdpr_saved_posts_csv, NullLogger
 class Grabbit:
     """ The main Grabbit class. """
     _posts: dict[PostId, PostStatus] = {}
-
-    _submissionQueue: list[Submission] = []
 
     _reddit: Reddit
     _downloader: Downloader
@@ -62,19 +60,23 @@ class Grabbit:
         """ Saves the current state of the Grabbit instance. """
         self._save()
 
-    def load_post_queue(self, csv_path: Optional[Path]) -> None:
-        """ Loads the post queue for download from the specified CSV file, or from Reddit if no file is specified. """
-        if csv_path:
-            # noinspection PyTypeChecker
-            self._submissionQueue = self._reddit.info(fullnames=load_gdpr_saved_posts_csv(csv_path))
-            self._logger.info("Loaded post queue from file %s", csv_path)
-        else:
-            self._submissionQueue = self._reddit.user.me().saved(limit=None)
-            self._logger.info("Loaded post queue from Reddit (Saved Posts)")
 
-    def download_queue(self, skip_failed: bool = False) -> None:
-        """ Downloads the entire post queue. """
-        for submission in self._submissionQueue:
+    def download_csv(self, csv_path: Path, skip_failed: bool = False) -> None:
+        """ Downloads the posts specified in the CSV file. """
+        self._download(self._submission_filter(self._reddit.info(fullnames=load_gdpr_saved_posts_csv(csv_path)), skip_failed=skip_failed))
+
+    def download_saved(self, skip_failed: bool = False) -> None:
+        """ Downloads all Saved Posts. """
+        self._download(self._submission_filter(self._reddit.user.me().saved(limit=None), skip_failed=skip_failed))
+
+
+    def _submission_filter(self, get_next: Iterator, skip_failed: bool) -> Iterator[Post]:
+        for submission in get_next:
+            if not isinstance(submission, Submission):
+                self._logger.info("Skipping %s - not a post", submission.id)
+                self._posts[submission.id] = PostStatus.SKIPPED
+                continue
+
             if submission.id in self._posts:
                 match self._posts[submission.id]:
                     case PostStatus.DOWNLOADED:
@@ -97,6 +99,10 @@ class Grabbit:
                 self._posts[post.id] = PostStatus.SKIPPED
                 continue
 
+            yield post
+
+    def _download(self, get_next: Iterator[Post]) -> None:
+        for post in get_next:
             self._logger.debug("Attempting to download post %s from r/%s", post.id, post.sub)
 
             target = self._wd / post.sub
@@ -111,9 +117,7 @@ class Grabbit:
 
             self._save_metadata(post, files, target)
 
-            self._posts[original_submission.id] = PostStatus.DOWNLOADED
-            if submission.id != original_submission.id: # If the post is a crosspost, add the crosspost id as well
-                self._posts[submission.id] = PostStatus.DOWNLOADED
+            self._posts[post.id] = PostStatus.DOWNLOADED
 
             self._added_count += 1
             self._logger.info("✅ Downloaded post %s from r/%s", post.id, post.sub)

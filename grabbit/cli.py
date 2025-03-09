@@ -54,14 +54,19 @@ def cli(output_dir: Path, user_config: Path, debug: bool, csv: Path, skip_failed
     if not grabbit.logged_in():
         logger.error("Failed to log in to Reddit, check your credentials")
         sys.exit(1)
-    logger.info("Logged in to Reddit as user %s", user.username)
+    logger.info("Accessing Reddit as user %s", user.username)
 
     logger.set_grabbit(grabbit)
     signal.signal(signal.SIGINT, exit_handler)
 
+    logger.info("Initializing 🔧")
     grabbit.init(output_dir)
-    grabbit.load_post_queue(csv)
 
-    logger.info("Starting download process 🚀")
-    grabbit.download_queue(skip_failed=skip_failed)
+    if csv is not None:
+        logger.info("Downloading posts specified in CSV file %s 🚀", csv)
+        grabbit.download_csv(csv_path=csv, skip_failed=skip_failed)
+    else:
+        logger.info("Downloading all Saved Posts 🚀")
+        grabbit.download_saved(skip_failed=skip_failed)
+
     logger.info("Download process completed! 🎉")
