@@ -4,7 +4,7 @@
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from requests.models import Response
-from grabbit.utils import guess_media_type, guess_media_extension, load_gdpr_saved_posts_csv, NullLogger
+from grabbit.utils import guess_media_type, guess_media_extension, load_gdpr_saved_posts_csv, ensure_post_id, NullLogger
 from grabbit.typing_custom import MediaType
 
 def test_guess_media_type():
@@ -46,6 +46,18 @@ def test_load_gdpr_saved_posts_csv():
 
     expected_ids = ["t3_12345", "t3_67890", "t3_abcde"]
     assert load_gdpr_saved_posts_csv(temp_file_path) == expected_ids
+
+def test_ensure_post_id_with_prefix():
+    """ Test case where post_id_like already starts with "t3_ """
+    post_id_like = "t3_abc123"
+    expected = "t3_abc123"
+    assert ensure_post_id(post_id_like) == expected
+
+def test_ensure_post_id_without_prefix():
+    """ Test case where post_id_like does not start with "t3_ """
+    post_id_like = "abc123"
+    expected = "t3_abc123"
+    assert ensure_post_id(post_id_like) == expected
 
 def test_null_logger(capsys):
     """ Tests the NullLogger class """
