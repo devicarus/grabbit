@@ -32,7 +32,7 @@ from grabbit.utils import get_version
     is_flag = True,
     help = "Skip previously failed downloads.",
 )
-@click.version_option(get_version())
+@click.version_option(get_version(), message="%(version)s")
 def cli(output_dir: Path, user_config: Path, debug: bool, csv: Path, skip_failed: bool):
     """
     OUTPUT_DIR is the directory where the downloaded files will be saved
