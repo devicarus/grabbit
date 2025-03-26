@@ -11,6 +11,7 @@ import click
 from grabbit.grabbit import Grabbit
 from grabbit.logger import GrabbitLogger
 from grabbit.typing_custom import RedditUser
+from grabbit.utils import get_version
 
 @click.command()
 @click.argument("output_dir", type = Path)
@@ -31,6 +32,7 @@ from grabbit.typing_custom import RedditUser
     is_flag = True,
     help = "Skip previously failed downloads.",
 )
+@click.version_option(get_version())
 def cli(output_dir: Path, user_config: Path, debug: bool, csv: Path, skip_failed: bool):
     """
     OUTPUT_DIR is the directory where the downloaded files will be saved

@@ -5,6 +5,7 @@ from mimetypes import guess_extension
 from pathlib import Path
 from typing import Optional
 from logging import Logger
+import tomllib
 
 from requests.models import Response
 
@@ -60,3 +61,10 @@ class NullLogger(Logger):
 
     def critical(self, *args, **kwargs):
         pass
+
+def get_version() -> str:
+    """ Returns the current version. """
+    with open('pyproject.toml', 'rb') as f:
+        # noinspection PyTypeChecker
+        pyproject_data = tomllib.load(f)
+    return pyproject_data['project']['version']
