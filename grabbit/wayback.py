@@ -52,6 +52,10 @@ class WaybackList:
         return ["https:" + url if url.startswith("//") else url for url in matches]
 
 
+# pylint: disable=too-few-public-methods
+# This is by design. While it potentially could be a single function,
+# Wayback being a class allows it to hold its instance of HTTPClient,
+# making the usage more concise and readable than passing an instance as an argument.
 class Wayback:
     """ A class for interacting with the Wayback Machine. """
     _api_url: str = "https://web.archive.org/cdx/search/cdx"

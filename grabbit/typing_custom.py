@@ -6,7 +6,9 @@ from enum import Enum
 
 PostId = str
 
-
+# pylint: disable=too-many-instance-attributes
+# This class represents a Reddit post and includes the fields required to capture relevant metadata.
+# Making it a dictionary instead would hurt readability and maintainability, while also essentially removing typing.
 @dataclass
 class Post:
     """ Represents a post on Reddit """

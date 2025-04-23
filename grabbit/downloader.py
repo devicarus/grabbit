@@ -16,7 +16,10 @@ from grabbit.typing_custom import Post, MediaType
 from grabbit.wayback import Wayback
 from grabbit.httpclient import HTTPClient, RetryLimitExceededException
 
-
+# pylint: disable=too-few-public-methods
+# This is by design. While it potentially could be a single function,
+# Downloader being a class allows it to hold its instances of Logger, HTTPClient and Wayback
+# making the usage more concise and readable than passing those as arguments of a function.
 class Downloader:
     """ Handles downloading media from Reddit. """
     _headers = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:135.0) Gecko/20100101 Firefox/135.0"}
@@ -81,7 +84,8 @@ class Downloader:
         return []
 
     def _download_media(self, post: Post, url: str, target: Path) -> list[Path]:
-        # TODO: Temporary, not sure how to handle this systematically yet
+        # Workaround for dead imgur links,
+        # because they replace the image with a placeholder image that ultimately gets downloaded otherwise.
         if self._follow_redirects(url) in ["https://i.imgur.com/removed.png", "https://imgur.com/"]:
             self._logger.debug("Dead Imgur link")
             return []
