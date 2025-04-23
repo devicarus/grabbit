@@ -149,21 +149,10 @@ class Grabbit:
             }, file, indent=4)
 
     def _to_post(self, submission: Submission) -> Post:
-        try: # TODO: Remove after testing
-            getattr(submission, 'url_overridden_by_dest')
-            if submission.url != submission.url_overridden_by_dest:
-                self._logger.warning("url_overridden_by_dest != url")
-                self._logger.debug("url_overridden_by_dest: %s", submission.url_overridden_by_dest)
-                self._logger.debug("url: %s", submission.url)
-        except AttributeError:
-            self._logger.warning("url_overridden_by_dest not on Submission")
-
-        url: str = getattr(submission, 'url_overridden_by_dest', submission.url)
-
         data: list[str] = []
         if submission.is_self:
             data = [submission.selftext]
-        elif "reddit.com/gallery/" in url:
+        elif "reddit.com/gallery/" in submission.url:
             data = self._process_gallery(submission)
 
         return Post(
@@ -172,7 +161,7 @@ class Grabbit:
             submission.title,
             submission.author.name if submission.author else "[deleted]",
             submission.created_utc,
-            url if url != '' else None,
+            submission.url if submission.url != '' else None,
             getattr(submission, 'preview', {"images": [{"source": {"url": None}}]})["images"][0]["source"]["url"],
             getattr(submission, 'domain', None),
             data
