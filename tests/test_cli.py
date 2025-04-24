@@ -1,3 +1,5 @@
+""" Tests of the CLI """
+
 from click.testing import CliRunner
 from grabbit.cli import cli
 from grabbit.utils import get_version
