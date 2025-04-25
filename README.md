@@ -46,6 +46,7 @@ Options:
   -d, --debug     Turn on activate debug mode.
   --csv FILENAME  Use Reddit GDPR saved posts export CSV file.
   --skip-failed   Skip previously failed downloads.
+  --version       Show the version and exit.
   --help          Show this message and exit.
 ```
 
