@@ -4,11 +4,6 @@
 
 > A Reddit saved post media and metadata downloader.
 
----
-
-🚧 **This project is still under heavy development and may not work as expected** 🚧
-
----
 
 </div>
 
