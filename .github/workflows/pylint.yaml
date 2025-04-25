@@ -1,0 +1,19 @@
+name: Pylint
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12"]
+        poetry-version: ["latest", "main", "2.1.2"]
+    steps:
+    - uses: actions/checkout@v4
+    - uses: ./.github/actions/setup-python-and-poetry
+      with:
+        python-version: ${{ matrix.python-version }}
+        poetry-version: ${{ matrix.poetry-version }}
+    - name: Run Pylint
+      run: poetry run pylint $(git ls-files '*.py')

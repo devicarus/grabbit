@@ -1,0 +1,30 @@
+name: Setup Python and Poetry
+description: Common setup for Python projects using Poetry
+
+inputs:
+  python-version:
+    description: Python version to use
+    required: true
+  poetry-version:
+    description: Poetry version to use
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python ${{ inputs.python-version }}
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ inputs.python-version }}
+    - name: Set up Poetry ${{ inputs.poetry-version }}
+      uses: abatilo/actions-poetry@v3
+      with:
+        poetry-version: ${{ inputs.poetry-version }}
+    - uses: actions/cache@v3
+      name: Define a cache for the virtual environment based on the dependencies lock file
+      with:
+        path: ./.venv
+        key: venv-${{ hashFiles('poetry.lock') }}
+    - name: Install the project dependencies
+      run: poetry install
+      shell: bash
