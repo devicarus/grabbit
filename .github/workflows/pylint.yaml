@@ -9,18 +9,13 @@ on:
 
 jobs:
   run:
-    strategy:
-      matrix:
-        python-version: ["3.12", "3.13"]
-        poetry-version: ["latest", "2.1.2"]
-        os: [ubuntu-latest, macos-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - name: Set up Python ${{ matrix.python-version }} and Poetry ${{ matrix.poetry-version }}
+    - name: Set up latest Python and Poetry
       uses: ./.github/actions/setup-python-and-poetry
       with:
-        python-version: ${{ matrix.python-version }}
-        poetry-version: ${{ matrix.poetry-version }}
+        python-version: "3.x"
+        poetry-version: "latest"
     - name: Run Pylint
       run: poetry run pylint $(git ls-files '*.py')
