@@ -8,11 +8,12 @@ on:
 
 jobs:
   run:
-    runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: ["3.12", "3.13"]
         poetry-version: ["latest", "2.1.2"]
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }} and Poetry ${{ matrix.poetry-version }}
