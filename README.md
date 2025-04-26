@@ -4,8 +4,8 @@
 
 > A Reddit saved post media and metadata downloader.
 
-<img alt="Pylint Status" src="https://img.shields.io/github/actions/workflow/status/devicarus/grabbit/pylint.yaml?style=for-the-badge&logo=python&logoColor=white&label=Pylint">
-<img alt="Pytest Status" src="https://img.shields.io/github/actions/workflow/status/devicarus/grabbit/pytest.yaml?style=for-the-badge&logo=pytest&logoColor=white&label=Pytest">
+<a href="https://github.com/devicarus/grabbit/actions/workflows/pylint.yaml"><img alt="Pylint Status" src="https://img.shields.io/github/actions/workflow/status/devicarus/grabbit/pylint.yaml?style=for-the-badge&logo=python&logoColor=white&label=Pylint"></a>
+<a href="https://github.com/devicarus/grabbit/actions/workflows/pytest.yaml"><img alt="Pytest Status" src="https://img.shields.io/github/actions/workflow/status/devicarus/grabbit/pytest.yaml?style=for-the-badge&logo=pytest&logoColor=white&label=Pytest"></a>
 
 </div>
 
