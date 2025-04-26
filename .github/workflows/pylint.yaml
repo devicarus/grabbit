@@ -15,7 +15,8 @@ jobs:
         poetry-version: ["latest", "main", "2.1.2"]
     steps:
     - uses: actions/checkout@v4
-    - uses: ./.github/actions/setup-python-and-poetry
+    - name: Set up Python ${{ matrix.python-version }} and Poetry ${{ matrix.poetry-version }}
+      uses: ./.github/actions/setup-python-and-poetry
       with:
         python-version: ${{ matrix.python-version }}
         poetry-version: ${{ matrix.poetry-version }}
