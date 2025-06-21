@@ -1,8 +1,8 @@
 FROM python:3.13.5-slim
 
 # Set environment variables
-ENV POETRY_VERSION=1.5.1 \
-    POETRY_VIRTUALENVS_CREATE=false \
+ENV POETRY_VERSION=2.1.3 \
+    POETRY_NO_INTERACTION=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
@@ -18,11 +18,12 @@ COPY pyproject.toml poetry.lock* /app/
 # Install the dependencies
 RUN poetry install --no-root
 
-# Copy the application code to the container
+# Copy the application code and README to the container
 COPY grabbit /app/grabbit
+COPY README.md /app/
 
 # Install the application
-RUN poetry install --no-root
+RUN poetry install
 
 # Command to run the application
 ENTRYPOINT ["poetry", "run", "grabbit"]
