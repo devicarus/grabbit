@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Optional
 from logging import Logger
 import tomllib
+import importlib.util
 
 from requests.models import Response
 
@@ -62,9 +63,27 @@ class NullLogger(Logger):
     def critical(self, *args, **kwargs):
         pass
 
+
+def find_pyproject_from_module(module_name: str) -> Path:
+    """
+    Given a module name (e.g. 'myapp'), find its installation root,
+    then walk upward to find pyproject.toml.
+    """
+    spec = importlib.util.find_spec(module_name)
+    if spec is None or not spec.origin:
+        raise ImportError(f"Cannot find module {module_name}")
+
+    current = Path(spec.origin).resolve().parent
+    while current != current.parent:
+        candidate = current / "pyproject.toml"
+        if candidate.is_file():
+            return candidate
+        current = current.parent
+    raise FileNotFoundError("pyproject.toml not found")
+
 def get_version() -> str:
     """ Returns the current version. """
-    with open('pyproject.toml', 'rb') as f:
+    with open(find_pyproject_from_module('grabbit'), 'rb') as f:
         # noinspection PyTypeChecker
         pyproject_data = tomllib.load(f)
     return pyproject_data['project']['version']
