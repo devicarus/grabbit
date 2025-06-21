@@ -1,6 +1,6 @@
 [project]
 name = "grabbit"
-version = "1.0.0"
+version = "1.0.1"
 description = "Reddit Saved Posts Downloader"
 authors = [
     {name = "devicarus",email = "devicarus@icloud.com"}
