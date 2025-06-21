@@ -109,7 +109,15 @@ class Grabbit:
             target.mkdir(parents=True, exist_ok=True)
             target = target / post.id
 
-            files = self._downloader.download(post, target)
+            try:
+                files = self._downloader.download(post, target)
+            # pylint: disable=broad-except
+            except Exception as e:
+                self._logger.error("🕸️ Downloader crash caught!", exc_info=e)
+                self._logger.info("❌ Failed to download post %s from r/%s", post.id, post.sub)
+                self._posts[post.id] = PostStatus.FAILED
+                continue
+
             if len(files) == 0:
                 self._logger.info("❌ Failed to download post %s from r/%s", post.id, post.sub)
                 self._posts[post.id] = PostStatus.FAILED
