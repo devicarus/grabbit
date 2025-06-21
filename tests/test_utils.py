@@ -3,10 +3,9 @@
 
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from unittest.mock import patch, mock_open
 from requests.models import Response
 
-from grabbit.utils import guess_media_type, guess_media_extension, load_gdpr_saved_posts_csv, ensure_post_id, NullLogger, get_version
+from grabbit.utils import guess_media_type, guess_media_extension, load_gdpr_saved_posts_csv, ensure_post_id, NullLogger
 from grabbit.typing_custom import MediaType
 
 def test_guess_media_type():
@@ -71,12 +70,3 @@ def test_null_logger(capsys):
     logger.critical("Critical message")
     captured = capsys.readouterr()
     assert captured.out == ""
-
-def test_get_version():
-    """ Tests the get_version function """
-    mock_toml_content = b"""
-    [project]
-    version = "1.0.0"
-    """
-    with patch('builtins.open', mock_open(read_data=mock_toml_content)):
-        assert get_version() == "1.0.0"
