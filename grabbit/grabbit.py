@@ -176,9 +176,13 @@ class Grabbit:
         )
 
     def _fix_crosspost(self, post: Submission) -> Submission:
-        crossposts = getattr(post, 'crosspost_parent_list', [])
-        if len(crossposts) > 0:
-            return self._reddit.submission(id=crossposts[-1]["id"])
+        try:
+            crossposts = getattr(post, 'crosspost_parent_list', [])
+            if len(crossposts) > 0:
+                return self._reddit.submission(id=crossposts[-1]["id"])
+        # pylint: disable=broad-except
+        except Exception as e:
+            self._logger.error("Failed to resolve crosspost, falling back to original post", exc_info=e)
         return post
 
     def _process_gallery(self, submission: Submission) -> list[str]:
