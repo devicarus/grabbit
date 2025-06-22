@@ -63,11 +63,11 @@ class Grabbit:
 
     def download_csv(self, csv_path: Path, skip_failed: bool = False) -> None:
         """ Downloads the posts specified in the CSV file. """
-        self._download(self._submission_filter(self._reddit.info(fullnames=load_gdpr_saved_posts_csv(csv_path)), skip_failed=skip_failed))
+        self._run(self._reddit.info(fullnames=load_gdpr_saved_posts_csv(csv_path)), skip_failed)
 
     def download_saved(self, skip_failed: bool = False) -> None:
         """ Downloads all Saved Posts. """
-        self._download(self._submission_filter(self._reddit.user.me().saved(limit=None), skip_failed=skip_failed))
+        self._run(self._reddit.user.me().saved(limit=None), skip_failed)
 
 
     def _submission_filter(self, get_next: Iterator, skip_failed: bool) -> Iterator[Post]:
@@ -101,39 +101,43 @@ class Grabbit:
 
             yield post
 
-    def _download(self, get_next: Iterator[Post]) -> None:
-        for post in get_next:
-            self._logger.debug("Attempting to download post %s from r/%s", post.id, post.sub)
-
-            target = self._wd / post.sub
-            target.mkdir(parents=True, exist_ok=True)
-            target = target / post.id
-
-            try:
-                files = self._downloader.download(post, target)
-            # pylint: disable=broad-except
-            except Exception as e:
-                self._logger.error("🕸️ Downloader crash caught!", exc_info=e)
-                self._logger.info("❌ Failed to download post %s from r/%s", post.id, post.sub)
-                self._posts[post.id] = PostStatus.FAILED
-                continue
-
-            if len(files) == 0:
-                self._logger.info("❌ Failed to download post %s from r/%s", post.id, post.sub)
-                self._posts[post.id] = PostStatus.FAILED
-                continue
-
-            self._save_metadata(post, files, target)
-
-            self._posts[post.id] = PostStatus.DOWNLOADED
-
-            self._added_count += 1
-            self._logger.info("✅ Downloaded post %s from r/%s", post.id, post.sub)
+    def _run(self, get_next: Iterator, skip_failed: bool) -> None:
+        for post in self._submission_filter(get_next, skip_failed):
+            self._download(post)
 
             if self._added_count % 10 == 0:
                 self._save()
 
         self._save()
+
+    def _download(self, post: Post) -> None:
+        self._logger.debug("Attempting to download post %s from r/%s", post.id, post.sub)
+
+        target = self._wd / post.sub
+        target.mkdir(parents=True, exist_ok=True)
+        target = target / post.id
+
+        try:
+            files = self._downloader.download(post, target)
+        # pylint: disable=broad-except
+        except Exception as e:
+            self._logger.error("Downloader crash caught", exc_info=e)
+            self._logger.info("❌ Failed to download post %s from r/%s", post.id, post.sub)
+            self._posts[post.id] = PostStatus.FAILED
+            return
+
+        if len(files) == 0:
+            self._logger.info("❌ Failed to download post %s from r/%s", post.id, post.sub)
+            self._posts[post.id] = PostStatus.FAILED
+            return
+
+        self._save_metadata(post, files, target)
+
+        self._posts[post.id] = PostStatus.DOWNLOADED
+
+        self._added_count += 1
+        self._logger.info("✅ Downloaded post %s from r/%s", post.id, post.sub)
+
 
     def total_posts(self):
         """ Returns the total number of posts in the database. """
