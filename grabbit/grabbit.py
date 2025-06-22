@@ -11,7 +11,7 @@ from praw.models import Submission
 from praw import Reddit
 from prawcore import OAuthException
 
-from grabbit.downloader import Downloader
+from grabbit.downloader import Downloader, DownloadFailedException
 from grabbit.typing_custom import PostId, Post, RedditUser, PostStatus
 from grabbit.utils import load_gdpr_saved_posts_csv, NullLogger
 
@@ -121,12 +121,8 @@ class Grabbit:
             files = self._downloader.download(post, target)
         # pylint: disable=broad-except
         except Exception as e:
-            self._logger.error("Downloader crash caught", exc_info=e)
-            self._logger.info("❌ Failed to download post %s from r/%s", post.id, post.sub)
-            self._posts[post.id] = PostStatus.FAILED
-            return
-
-        if len(files) == 0:
+            if not isinstance(e, DownloadFailedException):
+                self._logger.error("Downloader has crashed", exc_info=e)
             self._logger.info("❌ Failed to download post %s from r/%s", post.id, post.sub)
             self._posts[post.id] = PostStatus.FAILED
             return

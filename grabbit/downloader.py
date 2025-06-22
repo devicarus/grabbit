@@ -16,6 +16,9 @@ from grabbit.typing_custom import Post, MediaType
 from grabbit.wayback import Wayback
 from grabbit.httpclient import HTTPClient, RetryLimitExceededException
 
+class DownloadFailedException(Exception):
+    """ Raised when a download fails. """
+
 # pylint: disable=too-few-public-methods
 # This is by design. While it potentially could be a single function,
 # Downloader being a class allows it to hold its instances of Logger, HTTPClient and Wayback
@@ -81,7 +84,7 @@ class Downloader:
             if len(files) > 0:
                 return files
 
-        return []
+        raise DownloadFailedException
 
     def _download_media(self, post: Post, url: str, target: Path) -> list[Path]:
         # Workaround for dead imgur links,
