@@ -101,6 +101,7 @@ class Grabbit:
             self._logger.debug("Parsing submission %s from r/%s (https://reddit.com%s)", submission.id, submission.subreddit.display_name, submission.permalink)
             original_submission = self._fix_crosspost(submission)
             if original_submission.id != submission.id:
+                self._logger.debug("Post %s recognised as crosspost of %s", submission.id, original_submission.id)
                 if self._should_skip_known(original_submission, skip_failed):
                     continue
 
