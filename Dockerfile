@@ -6,6 +6,10 @@ ENV POETRY_VERSION=2.1.3 \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
 # Install Poetry
 RUN pip install --no-cache-dir poetry
 
