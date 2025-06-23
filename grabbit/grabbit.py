@@ -70,6 +70,24 @@ class Grabbit:
         self._run(self._reddit.user.me().saved(limit=None), skip_failed)
 
 
+    def _should_skip_known(self, submission: Submission, skip_failed: bool) -> bool:
+        match self._posts.get(submission.id):
+            case PostStatus.DOWNLOADED:
+                self._logger.info("Skipping post %s from r/%s - already downloaded", submission.id,
+                                  submission.subreddit.display_name)
+                return True
+            case PostStatus.SKIPPED:
+                self._logger.info("Skipping post %s from r/%s - no valid data to work with", submission.id,
+                                  submission.subreddit.display_name)
+                return True
+            case PostStatus.FAILED if skip_failed:
+                self._logger.info("Skipping post %s from r/%s - previously failed", submission.id,
+                                  submission.subreddit.display_name)
+                return True
+            case _:
+                return False
+
+
     def _submission_filter(self, get_next: Iterator, skip_failed: bool) -> Iterator[Post]:
         for submission in get_next:
             if not isinstance(submission, Submission):
@@ -77,20 +95,15 @@ class Grabbit:
                 self._posts[submission.id] = PostStatus.SKIPPED
                 continue
 
-            if submission.id in self._posts:
-                match self._posts[submission.id]:
-                    case PostStatus.DOWNLOADED:
-                        self._logger.info("Skipping post %s from r/%s - already downloaded", submission.id, submission.subreddit.display_name)
-                        continue
-                    case PostStatus.SKIPPED:
-                        self._logger.info("Skipping post %s from r/%s - no valid data to work with", submission.id, submission.subreddit.display_name)
-                        continue
-                    case PostStatus.FAILED if skip_failed:
-                        self._logger.info("Skipping post %s from r/%s - previously failed", submission.id, submission.subreddit.display_name)
-                        continue
+            if self._should_skip_known(submission, skip_failed):
+                continue
 
             self._logger.debug("Parsing submission %s from r/%s (https://reddit.com%s)", submission.id, submission.subreddit.display_name, submission.permalink)
             original_submission = self._fix_crosspost(submission)
+            if original_submission.id != submission.id:
+                if self._should_skip_known(original_submission, skip_failed):
+                    continue
+
             try:
                 post = self._to_post(original_submission)
             # pylint: disable=broad-except
