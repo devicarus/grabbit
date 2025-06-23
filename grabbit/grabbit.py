@@ -95,7 +95,7 @@ class Grabbit:
                 post = self._to_post(original_submission)
             # pylint: disable=broad-except
             except Exception as e:
-                self._logger.error("Failed to parse submission", exc_info=e)
+                self._logger.error("Failed to parse post %s from r/%s", original_submission.id, original_submission.subreddit.display_name, exc_info=e)
                 self._posts[submission.id] = PostStatus.FAILED
                 continue
 
