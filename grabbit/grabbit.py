@@ -91,7 +91,13 @@ class Grabbit:
 
             self._logger.debug("Parsing submission %s from r/%s (https://reddit.com%s)", submission.id, submission.subreddit.display_name, submission.permalink)
             original_submission = self._fix_crosspost(submission)
-            post = self._to_post(original_submission)
+            try:
+                post = self._to_post(original_submission)
+            # pylint: disable=broad-except
+            except Exception as e:
+                self._logger.error("Failed to parse submission", exc_info=e)
+                self._posts[submission.id] = PostStatus.FAILED
+                continue
 
             self._logger.debug(post)
             if not post.good():
