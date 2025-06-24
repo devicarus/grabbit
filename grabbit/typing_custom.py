@@ -24,9 +24,14 @@ class Post:
 
     def good(self):
         """ Returns True if the post is good, False otherwise. """
-        return (self.url is not None
-                or self.url_preview is not None
-                or (self.data != ['[removed]'] and self.data != ['[ Removed by Reddit in response to a copyright notice. ]'] and len(self.data) != 0))
+        return not (
+            self.url is None and self.url_preview is None
+            and (self.data == ['[removed]']
+                or self.data == ['[ Removed by Reddit in response to a copyright notice. ]']
+                or self.data == ['[ Removed by Reddit on account of violating the [content policy](/help/contentpolicy). ]']
+                or len(self.data) == 0
+            )
+        )
 
 
 class MediaType(Enum):
