@@ -7,7 +7,7 @@ from logging import Logger
 import requests
 from requests.models import Response
 
-from grabbit.utils import NullLogger
+from grabbit.utils import NullLogger, exponential_backoff
 
 class RetryLimitExceededException(Exception):
     """ Raised when the maximum number of retries is exceeded. """
@@ -16,13 +16,13 @@ class HTTPClient:
     """ A wrapper around the requests library that handles retries and backoff. """
     _headers: dict[str, str]
     _logger: Logger
-    _backoff_factor: float = 0.5
+    _base_delay: float = 2
 
     def __init__(self, headers: dict | None = None, logger: Logger | None = None):
         self._headers = headers if headers is not None else {}
         self._logger = logger if logger is not None else NullLogger()
 
-    def request(self, method: str, url: str, max_tries: int = 5, timeout: int = 30, **kwargs) -> Response:
+    def request(self, method: str, url: str, max_tries: int = 3, timeout: int = 30, **kwargs) -> Response:
         """ Sends a request to the specified URL. """
         retry_count = 0
         while retry_count < max_tries:
@@ -34,7 +34,7 @@ class HTTPClient:
                     time.sleep(61)
 
             retry_count += 1
-            time.sleep(self._backoff_factor * (2 ** retry_count))
+            exponential_backoff(retry_count, self._base_delay, jitter=True)
         raise RetryLimitExceededException(f"Failed to fetch data from {url} after {max_tries} retries")
 
     def get(self, url: str, params: dict | None = None, **kwargs) -> Response:

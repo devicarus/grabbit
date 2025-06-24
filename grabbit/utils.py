@@ -6,6 +6,8 @@ from pathlib import Path
 from typing import Optional
 from logging import Logger
 from importlib.metadata import version, PackageNotFoundError
+import random
+import time
 
 from requests.models import Response
 
@@ -68,3 +70,10 @@ def get_version() -> str:
         return version("grabbit")
     except PackageNotFoundError:
         return "unknown"
+
+def exponential_backoff(retry_count: int, base_delay: float = 2, jitter: bool = False):
+    """ Sleeps for an exponentially increasing amount of time. """
+    backoff_time = base_delay * (2 ** retry_count - 1)
+    if jitter:
+        backoff_time += random.uniform(0, 1)
+    time.sleep(backoff_time)
