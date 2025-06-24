@@ -22,16 +22,18 @@ class Post:
     source: Optional[str] = None
     data: list[str] = field(default_factory=list)
 
+    def good_data(self):
+        """ Returns True if the post data is good, False otherwise."""
+        return not (
+            self.data == ['[removed]']
+            or self.data == ['[ Removed by Reddit in response to a copyright notice. ]']
+            or self.data == ['[ Removed by Reddit on account of violating the [content policy](/help/contentpolicy). ]']
+            or len(self.data) == 0
+        )
+
     def good(self):
         """ Returns True if the post is good, False otherwise. """
-        return not (
-            self.url is None and self.url_preview is None
-            and (self.data == ['[removed]']
-                or self.data == ['[ Removed by Reddit in response to a copyright notice. ]']
-                or self.data == ['[ Removed by Reddit on account of violating the [content policy](/help/contentpolicy). ]']
-                or len(self.data) == 0
-            )
-        )
+        return self.url is not None or self.url_preview is not None or self.good_data()
 
 
 class MediaType(Enum):

@@ -102,7 +102,7 @@ class Downloader:
             case MediaType.VIDEO:
                 path = self._download_video(url, target)
                 return [path] if path is not None else []
-            case MediaType.TEXT:
+            case MediaType.TEXT if post.good_data():
                 return [self._download_text(post.data, target)]
 
         return []
