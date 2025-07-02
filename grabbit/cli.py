@@ -67,7 +67,6 @@ def cli(output_dir: Path, user_config: Path, debug: bool, csv: Path, skip_failed
         sys.exit(1)
     logger.info("Accessing Reddit as user %s", user.username)
 
-    logger.set_grabbit(grabbit)
     signal.signal(signal.SIGINT, exit_handler)
 
     logger.info("Initializing 🔧")
@@ -77,6 +76,8 @@ def cli(output_dir: Path, user_config: Path, debug: bool, csv: Path, skip_failed
         skip_failed=skip_failed,
         save_every=save_every,
     )
+
+    logger.set_grabbit(grabbit)
 
     if csv is not None:
         logger.info("Downloading posts specified in CSV file %s 🚀", csv)
