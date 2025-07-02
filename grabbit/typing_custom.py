@@ -60,7 +60,7 @@ class MediaType(Enum):
 
 
 @dataclass
-class RedditUser:
+class RedditAccount:
     """ Represents a Reddit user """
     username: str
     password: str

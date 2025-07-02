@@ -12,7 +12,7 @@ from praw import Reddit
 from prawcore import OAuthException
 
 from grabbit.downloader import Downloader, DownloadFailedException
-from grabbit.typing_custom import PostId, Post, RedditUser, PostStatus, DownloadOptions, Subreddit, User
+from grabbit.typing_custom import PostId, Post, RedditAccount, PostStatus, DownloadOptions, Subreddit, User
 from grabbit.utils import load_gdpr_saved_posts_csv, NullLogger
 
 
@@ -26,7 +26,7 @@ class Grabbit:
     _wd: Path
     _added_count = 0
 
-    def __init__(self, user: RedditUser, logger: Logger | None):
+    def __init__(self, user: RedditAccount, logger: Logger | None):
         self._reddit = Reddit(
             user_agent = "Grabbit - Saved Posts Downloader",
             username=user.username,

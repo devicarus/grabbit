@@ -10,7 +10,7 @@ import click
 
 from grabbit.grabbit import Grabbit
 from grabbit.logger import GrabbitLogger
-from grabbit.typing_custom import RedditUser, DownloadOptions
+from grabbit.typing_custom import RedditAccount, DownloadOptions
 from grabbit.utils import get_version
 
 @click.command()
@@ -59,7 +59,7 @@ def cli(output_dir: Path, user_config: Path, debug: bool, csv: Path, skip_failed
     logger.debug("Reading user configuration")
     with open(user_config, encoding="utf-8") as f:
         config = json.load(f)
-        user = RedditUser(**config)
+        user = RedditAccount(**config)
 
     grabbit = Grabbit(user=user, logger=logger)
     if not grabbit.logged_in():
