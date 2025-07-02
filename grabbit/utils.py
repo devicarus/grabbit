@@ -49,19 +49,7 @@ class NullLogger(Logger):
     def __init__(self):
         super().__init__("NullLogger")
 
-    def debug(self, *args, **kwargs):
-        pass
-
-    def info(self, *args, **kwargs):
-        pass
-
-    def warning(self, *args, **kwargs):
-        pass
-
-    def error(self, *args, **kwargs):
-        pass
-
-    def critical(self, *args, **kwargs):
+    def _log(self, *args, **kwargs):
         pass
 
 def get_version() -> str:
