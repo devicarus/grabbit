@@ -12,7 +12,7 @@ from praw import Reddit
 from prawcore import OAuthException
 
 from grabbit.downloader import Downloader, DownloadFailedException
-from grabbit.typing_custom import PostId, Post, RedditUser, PostStatus, DownloadOptions
+from grabbit.typing_custom import PostId, Post, RedditUser, PostStatus, DownloadOptions, Subreddit, User
 from grabbit.utils import load_gdpr_saved_posts_csv, NullLogger
 
 
@@ -115,7 +115,7 @@ class Grabbit:
 
             self._logger.debug(post)
             if not post.good():
-                self._logger.info("Skipping post %s from r/%s - no valid data to work with", post.id, post.sub)
+                self._logger.info("Skipping post %s from r/%s - no valid data to work with", post.id, post.subreddit.name)
                 self._posts[post.id] = PostStatus.SKIPPED
                 continue
 
@@ -131,9 +131,9 @@ class Grabbit:
         self._save()
 
     def _download(self, post: Post) -> None:
-        self._logger.debug("Attempting to download post %s from r/%s", post.id, post.sub)
+        self._logger.debug("Attempting to download post %s from r/%s", post.id, post.subreddit.name)
 
-        target = self._wd / post.sub
+        target = self._wd / post.subreddit.name
         target.mkdir(parents=True, exist_ok=True)
         target = target / post.id
 
@@ -143,7 +143,7 @@ class Grabbit:
         except Exception as e:
             if not isinstance(e, DownloadFailedException):
                 self._logger.error("Downloader has crashed", exc_info=e)
-            self._logger.info("❌ Failed to download post %s from r/%s", post.id, post.sub)
+            self._logger.info("❌ Failed to download post %s from r/%s", post.id, post.subreddit.name)
             self._posts[post.id] = PostStatus.FAILED
             return
 
@@ -152,7 +152,7 @@ class Grabbit:
         self._posts[post.id] = PostStatus.DOWNLOADED
 
         self._added_count += 1
-        self._logger.info("✅ Downloaded post %s from r/%s", post.id, post.sub)
+        self._logger.info("✅ Downloaded post %s from r/%s", post.id, post.subreddit.name)
 
 
     def total_posts(self):
@@ -169,9 +169,15 @@ class Grabbit:
             # noinspection PyTypeChecker
             json.dump({
                 "id": post.id,
-                "sub": post.sub,
+                "subreddit": {
+                    "id": post.subreddit.id,
+                    "name": post.subreddit.name,
+                },
                 "title": post.title,
-                "author": post.author,
+                "author": {
+                    "id": post.author.id,
+                    "name": post.author.name,
+                } if post.author else None,
                 "date": post.date,
                 "files": [str(file.relative_to(target.parent)) for file in files],
             }, file, indent=4)
@@ -185,9 +191,9 @@ class Grabbit:
 
         return Post(
             submission.id,
-            submission.subreddit.display_name,
+            Subreddit(submission.subreddit.id, submission.subreddit.display_name),
             submission.title,
-            submission.author.name if submission.author else "[deleted]",
+            User(submission.author.id, submission.author.name) if submission.author else None,
             submission.created_utc,
             submission.url if submission.url != '' else None,
             getattr(submission, 'preview', {"images": [{"source": {"url": None}}]})["images"][0]["source"]["url"],

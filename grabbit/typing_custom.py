@@ -5,6 +5,20 @@ from typing import Optional
 from enum import Enum
 
 PostId = str
+SubredditId = str
+UserId = str
+
+@dataclass
+class Subreddit:
+    """ Represents a subreddit """
+    id: SubredditId
+    name: str
+
+@dataclass
+class User:
+    """ Represents a Reddit user """
+    id: UserId
+    name: str
 
 # pylint: disable=too-many-instance-attributes
 # This class represents a Reddit post and includes the fields required to capture relevant metadata.
@@ -13,13 +27,13 @@ PostId = str
 class Post:
     """ Represents a post on Reddit """
     id: PostId
-    sub: str
+    subreddit: Subreddit
     title: str
-    author: str
+    author: Optional[User]
     date: int
-    url: Optional[str] = None
-    url_preview: Optional[str] = None
-    source: Optional[str] = None
+    url: Optional[str]
+    url_preview: Optional[str]
+    source: Optional[str]
     data: list[str] = field(default_factory=list)
 
     def good_data(self):
