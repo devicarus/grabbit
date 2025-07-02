@@ -59,3 +59,9 @@ class PostStatus(str, Enum):
     DOWNLOADED = "downloaded"
     SKIPPED = "skipped"
     FAILED = "failed"
+
+@dataclass
+class DownloadOptions:
+    """ Represents the options for downloading """
+    skip_failed: bool
+    save_every: int

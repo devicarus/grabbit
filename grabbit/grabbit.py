@@ -12,7 +12,7 @@ from praw import Reddit
 from prawcore import OAuthException
 
 from grabbit.downloader import Downloader, DownloadFailedException
-from grabbit.typing_custom import PostId, Post, RedditUser, PostStatus
+from grabbit.typing_custom import PostId, Post, RedditUser, PostStatus, DownloadOptions
 from grabbit.utils import load_gdpr_saved_posts_csv, NullLogger
 
 
@@ -61,13 +61,13 @@ class Grabbit:
         self._save()
 
 
-    def download_csv(self, csv_path: Path, skip_failed: bool = False) -> None:
+    def download_csv(self, csv_path: Path, options: DownloadOptions) -> None:
         """ Downloads the posts specified in the CSV file. """
-        self._run(self._reddit.info(fullnames=load_gdpr_saved_posts_csv(csv_path)), skip_failed)
+        self._run(self._reddit.info(fullnames=load_gdpr_saved_posts_csv(csv_path)), options)
 
-    def download_saved(self, skip_failed: bool = False) -> None:
+    def download_saved(self, options: DownloadOptions) -> None:
         """ Downloads all Saved Posts. """
-        self._run(self._reddit.user.me().saved(limit=None), skip_failed)
+        self._run(self._reddit.user.me().saved(limit=None), options)
 
 
     def _should_skip_known(self, submission: Submission, skip_failed: bool) -> bool:
@@ -121,11 +121,11 @@ class Grabbit:
 
             yield post
 
-    def _run(self, get_next: Iterator, skip_failed: bool) -> None:
-        for post in self._submission_filter(get_next, skip_failed):
+    def _run(self, get_next: Iterator, options: DownloadOptions) -> None:
+        for post in self._submission_filter(get_next, options.skip_failed):
             self._download(post)
 
-            if self._added_count % 10 == 0:
+            if self._added_count % options.save_every == 0:
                 self._save()
 
         self._save()

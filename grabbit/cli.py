@@ -10,7 +10,7 @@ import click
 
 from grabbit.grabbit import Grabbit
 from grabbit.logger import GrabbitLogger
-from grabbit.typing_custom import RedditUser
+from grabbit.typing_custom import RedditUser, DownloadOptions
 from grabbit.utils import get_version
 
 @click.command()
@@ -32,8 +32,17 @@ from grabbit.utils import get_version
     is_flag = True,
     help = "Skip previously failed downloads.",
 )
+@click.option(
+    "--save-every",
+    metavar="N",
+    type=click.IntRange(1, None),
+    default=10,
+    show_default=True,
+    help="Save progress to JSON every N items."
+)
 @click.version_option(get_version(), message="%(version)s")
-def cli(output_dir: Path, user_config: Path, debug: bool, csv: Path, skip_failed: bool):
+# pylint: disable=too-many-arguments,too-many-positional-arguments
+def cli(output_dir: Path, user_config: Path, debug: bool, csv: Path, skip_failed: bool, save_every: int):
     """
     OUTPUT_DIR is the directory where the downloaded files will be saved
     USER_CONFIG is the path to a JSON file containing Reddit user credentials
@@ -64,11 +73,16 @@ def cli(output_dir: Path, user_config: Path, debug: bool, csv: Path, skip_failed
     logger.info("Initializing 🔧")
     grabbit.init(output_dir)
 
+    options = DownloadOptions(
+        skip_failed=skip_failed,
+        save_every=save_every,
+    )
+
     if csv is not None:
         logger.info("Downloading posts specified in CSV file %s 🚀", csv)
-        grabbit.download_csv(csv_path=csv, skip_failed=skip_failed)
+        grabbit.download_csv(csv_path=csv, options=options)
     else:
         logger.info("Downloading all Saved Posts 🚀")
-        grabbit.download_saved(skip_failed=skip_failed)
+        grabbit.download_saved(options=options)
 
     logger.info("Download process completed! 🎉")
