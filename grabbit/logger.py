@@ -5,9 +5,11 @@ from copy import copy
 from datetime import datetime
 import os
 from logging import StreamHandler
+from typing import Protocol, Optional
 
-from grabbit.grabbit import Grabbit
-
+class GrabbitStatsProvider(Protocol):
+    def total_posts(self) -> int: ...
+    def added_posts(self) -> int: ...
 
 class GrabbitFormatter(logging.Formatter):
     """ Custom formatter for GrabbitLogger """
@@ -41,12 +43,11 @@ class GrabbitFormatter(logging.Formatter):
 
 class GrabbitLogger(logging.Logger):
     """ Custom logger for Grabbit """
-    _grabbit: Grabbit = None
+    _stats_provider: Optional[GrabbitStatsProvider] = None
     _console_handler: StreamHandler
 
     def __init__(self, level=logging.INFO):
         super().__init__("GrabbitLogger", level)
-        self.extra_info = None
 
         # Console handler
         self._console_handler = logging.StreamHandler()
@@ -65,22 +66,24 @@ class GrabbitLogger(logging.Logger):
         file_handler.setLevel(logging.DEBUG)
         self.addHandler(file_handler)
 
-    def set_grabbit(self, grabbit: Grabbit):
+    def set_stats_provider(self, provider: GrabbitStatsProvider):
         """ Set the Grabbit instance to get extra info from """
-        self._grabbit = grabbit
+        self._stats_provider = provider
         self._console_handler.setFormatter(GrabbitFormatter(show_stats=True))
 
     def _get_extra(self):
-        if self._grabbit is None:
+        if self._stats_provider is None:
             return {
                 "total": 0,
                 "added": 0
             }
 
         return {
-            "total": self._grabbit.total_posts(),
-            "added": self._grabbit.added_posts()
+            "total": self._stats_provider.total_posts(),
+            "added": self._stats_provider.added_posts()
         }
 
     def _log(self, level, msg, *args, **kwargs):
         super()._log(level, msg, *args, extra=self._get_extra(), **kwargs)
+
+logger = GrabbitLogger()

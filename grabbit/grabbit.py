@@ -1,32 +1,31 @@
 """ This module contains the main Grabbit class."""
 
 from json import JSONDecodeError
-from mimetypes import guess_extension
 from pathlib import Path
 from typing import Iterator
-from logging import Logger
 import json
 
+from praw.exceptions import RedditAPIException, ClientException
 from praw.models import Submission
 from praw import Reddit
 from prawcore import OAuthException
 
-from grabbit.downloader import Downloader, DownloadFailedException
-from grabbit.typing_custom import PostId, Post, RedditAccount, PostStatus, DownloadOptions, Subreddit, User
-from grabbit.utils import load_gdpr_saved_posts_csv, NullLogger
+from grabbit.downloader import get_downloader
+from grabbit.typing_custom import RedditAccount, PostStatus, DownloadOptions
+from grabbit.utils import load_gdpr_saved_posts_csv, safe_generator, branch_counter
+from grabbit.logger import logger
 
 
 class Grabbit:
     """ The main Grabbit class. """
-    _posts: dict[PostId, PostStatus] = {}
+    _posts: dict[str, PostStatus] = {}
 
     _reddit: Reddit
-    _downloader: Downloader
 
     _wd: Path
     _added_count = 0
 
-    def __init__(self, user: RedditAccount, logger: Logger | None):
+    def __init__(self, user: RedditAccount):
         self._reddit = Reddit(
             user_agent = "Grabbit - Saved Posts Downloader",
             username=user.username,
@@ -34,10 +33,6 @@ class Grabbit:
             client_id = user.client_id,
             client_secret = user.client_secret
         )
-
-        self._logger = logger if logger else NullLogger()
-
-        self._downloader = Downloader(self._logger)
 
     def logged_in(self):
         """ Returns True if the user credentials are correct, False otherwise. """
@@ -49,11 +44,11 @@ class Grabbit:
 
     def init(self, wd: Path) -> None:
         """ Initializes the Grabbit instance. """
-        self._logger.debug("Initializing Grabbit working directory")
+        logger.debug("Initializing Grabbit working directory")
         self._wd = wd
         self._wd.mkdir(parents=True, exist_ok=True)
 
-        self._logger.debug("Checking for existing data")
+        logger.debug("Checking for existing data")
         self._load()
 
     def exit(self) -> None:
@@ -73,53 +68,48 @@ class Grabbit:
     def _should_skip_known(self, submission: Submission, skip_failed: bool) -> bool:
         match self._posts.get(submission.id):
             case PostStatus.DOWNLOADED:
-                self._logger.info("Skipping post %s from r/%s - already downloaded", submission.id,
+                logger.info("Skipping post %s from r/%s - already downloaded", submission.id,
                                   submission.subreddit.display_name)
                 return True
             case PostStatus.SKIPPED:
-                self._logger.info("Skipping post %s from r/%s - no valid data to work with", submission.id,
+                logger.info("Skipping post %s from r/%s - no valid data to work with", submission.id,
                                   submission.subreddit.display_name)
                 return True
             case PostStatus.FAILED if skip_failed:
-                self._logger.info("Skipping post %s from r/%s - previously failed", submission.id,
+                logger.info("Skipping post %s from r/%s - previously failed", submission.id,
                                   submission.subreddit.display_name)
                 return True
             case _:
                 return False
 
 
-    def _submission_filter(self, get_next: Iterator, skip_failed: bool) -> Iterator[Post]:
+    @safe_generator(
+        exceptions=(RedditAPIException, ClientException),
+        handler=lambda e: logger.error("Reddit API error while preprocessing, skipped: %s", e, exc_info=True),
+    )
+    def _submission_filter(self, get_next: Iterator[Submission], skip_failed: bool) -> Iterator[Submission]:
         for submission in get_next:
             if not isinstance(submission, Submission):
-                self._logger.info("Skipping %s - not a post", submission.id)
+                logger.info("Skipping %s - not a post", submission.id)
                 self._posts[submission.id] = PostStatus.SKIPPED
                 continue
 
             if self._should_skip_known(submission, skip_failed):
                 continue
 
-            self._logger.debug("Parsing submission %s from r/%s (https://reddit.com%s)", submission.id, submission.subreddit.display_name, submission.permalink)
+            logger.debug("Processing submission %s from r/%s (https://reddit.com%s)", submission.id, submission.subreddit.display_name, submission.permalink)
             original_submission = self._fix_crosspost(submission)
             if original_submission.id != submission.id:
-                self._logger.debug("Post %s recognised as crosspost of %s", submission.id, original_submission.id)
+                logger.debug("Post %s recognised as crosspost of %s", submission.id, original_submission.id)
                 if self._should_skip_known(original_submission, skip_failed):
                     continue
 
-            try:
-                post = self._to_post(original_submission)
-            # pylint: disable=broad-except
-            except Exception as e:
-                self._logger.error("Failed to parse post %s from r/%s", original_submission.id, original_submission.subreddit.display_name, exc_info=e)
-                self._posts[submission.id] = PostStatus.FAILED
+            if submission.selftext in ['[removed]', '[ Removed by Reddit in response to a copyright notice. ]', '[ Removed by Reddit on account of violating the [content policy](/help/contentpolicy). ]']:
+                logger.info("Skipping post %s from r/%s - no valid data to work with", submission.id, submission.subreddit.display_name)
+                self._posts[submission.id] = PostStatus.SKIPPED
                 continue
 
-            self._logger.debug(post)
-            if not post.good():
-                self._logger.info("Skipping post %s from r/%s - no valid data to work with", post.id, post.subreddit.name)
-                self._posts[post.id] = PostStatus.SKIPPED
-                continue
-
-            yield post
+            yield submission
 
     def _run(self, get_next: Iterator, options: DownloadOptions) -> None:
         for post in self._submission_filter(get_next, options.skip_failed):
@@ -130,29 +120,22 @@ class Grabbit:
 
         self._save()
 
-    def _download(self, post: Post) -> None:
-        self._logger.debug("Attempting to download post %s from r/%s", post.id, post.subreddit.name)
+    def _download(self, submission: Submission) -> None:
+        logger.debug("Attempting to download post %s from r/%s", submission.id, submission.subreddit.display_name)
 
-        target = self._wd / post.subreddit.name
+        target = self._wd / submission.subreddit.display_name
         target.mkdir(parents=True, exist_ok=True)
-        target = target / post.id
+        target = target / submission.id
 
-        try:
-            files = self._downloader.download(post, target)
-        # pylint: disable=broad-except
-        except Exception as e:
-            if not isinstance(e, DownloadFailedException):
-                self._logger.error("Downloader has crashed", exc_info=e)
-            self._logger.info("❌ Failed to download post %s from r/%s", post.id, post.subreddit.name)
-            self._posts[post.id] = PostStatus.FAILED
+        if not get_downloader(submission).download(submission, target):
+            logger.info("❌ Failed to download post %s from r/%s", submission.id, submission.subreddit.display_name)
+            self._posts[submission.id] = PostStatus.FAILED
             return
 
-        self._save_metadata(post, files, target)
-
-        self._posts[post.id] = PostStatus.DOWNLOADED
+        self._posts[submission.id] = PostStatus.DOWNLOADED
 
         self._added_count += 1
-        self._logger.info("✅ Downloaded post %s from r/%s", post.id, post.subreddit.name)
+        logger.info("✅ Downloaded post %s from r/%s", submission.id, submission.subreddit.display_name)
 
 
     def total_posts(self):
@@ -163,44 +146,6 @@ class Grabbit:
         """ Returns the number of posts added to the database by the Grabbit instance. """
         return self._added_count
 
-    @staticmethod
-    def _save_metadata(post: Post, files: list[Path], target: Path) -> None:
-        with open(target.with_suffix(".json"), "w", encoding="utf-8") as file:
-            # noinspection PyTypeChecker
-            json.dump({
-                "id": post.id,
-                "subreddit": {
-                    "id": post.subreddit.id,
-                    "name": post.subreddit.name,
-                },
-                "title": post.title,
-                "author": {
-                    "id": post.author.id,
-                    "name": post.author.name,
-                } if post.author else None,
-                "date": post.date,
-                "files": [str(file.relative_to(target.parent)) for file in files],
-            }, file, indent=4)
-
-    def _to_post(self, submission: Submission) -> Post:
-        data: list[str] = []
-        if submission.is_self:
-            data = [submission.selftext]
-        elif "reddit.com/gallery/" in submission.url:
-            data = self._process_gallery(submission)
-
-        return Post(
-            submission.id,
-            Subreddit(submission.subreddit.id, submission.subreddit.display_name),
-            submission.title,
-            User(submission.author.id, submission.author.name) if submission.author else None,
-            submission.created_utc,
-            submission.url if submission.url != '' else None,
-            getattr(submission, 'preview', {"images": [{"source": {"url": None}}]})["images"][0]["source"]["url"],
-            getattr(submission, 'domain', None),
-            data
-        )
-
     def _fix_crosspost(self, post: Submission) -> Submission:
         try:
             crossposts = getattr(post, 'crosspost_parent_list', [])
@@ -208,34 +153,9 @@ class Grabbit:
                 return self._reddit.submission(id=crossposts[-1]["id"])
         # pylint: disable=broad-except
         except Exception as e:
-            self._logger.error("Failed to resolve crosspost, falling back to original post", exc_info=e)
+            branch_counter.record("fix_crosspost_fail")
+            logger.error("Failed to resolve crosspost, falling back to original post", exc_info=e)
         return post
-
-    def _process_gallery(self, submission: Submission) -> list[str]:
-        try:
-            gallery_data = getattr(submission, 'gallery_data')
-        except AttributeError:
-            return []
-
-        if gallery_data is None:
-            return []
-
-        urls = []
-        for media_id in [item["media_id"] for item in gallery_data["items"]]:
-            try:
-                img = getattr(submission, "media_metadata")[media_id]
-            except AttributeError:
-                self._logger.warning("Media metadata missing for media_id %s", media_id)
-                continue
-
-            extension = guess_extension(img["m"], strict=False).removeprefix(".")
-            if extension in img["s"]:
-                url = img["s"][extension]
-            else:
-                url = img["s"]["u"]
-            urls.append(url)
-
-        return urls
 
     def _save(self):
         with open(self._wd / "db.json", "w", encoding="utf-8") as file:

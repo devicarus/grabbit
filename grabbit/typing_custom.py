@@ -1,62 +1,21 @@
 """ This module contains custom types used in the Grabbit package. """
 
-from dataclasses import dataclass, field
-from typing import Optional
+from dataclasses import dataclass
 from enum import Enum
 
-PostId = str
-SubredditId = str
-UserId = str
 
-@dataclass
-class Subreddit:
-    """ Represents a subreddit """
-    id: SubredditId
-    name: str
-
-@dataclass
-class User:
-    """ Represents a Reddit user """
-    id: UserId
-    name: str
-
-# pylint: disable=too-many-instance-attributes
-# This class represents a Reddit post and includes the fields required to capture relevant metadata.
-# Making it a dictionary instead would hurt readability and maintainability, while also essentially removing typing.
-@dataclass
-class Post:
-    """ Represents a post on Reddit """
-    id: PostId
-    subreddit: Subreddit
-    title: str
-    author: Optional[User]
-    date: int
-    url: Optional[str]
-    url_preview: Optional[str]
-    source: Optional[str]
-    data: list[str] = field(default_factory=list)
-
-    def good_data(self):
-        """ Returns True if the post data is good, False otherwise."""
-        return not (
-            self.data == ['[removed]']
-            or self.data == ['[ Removed by Reddit in response to a copyright notice. ]']
-            or self.data == ['[ Removed by Reddit on account of violating the [content policy](/help/contentpolicy). ]']
-            or len(self.data) == 0
-        )
-
-    def good(self):
-        """ Returns True if the post is good, False otherwise. """
-        return self.url is not None or self.url_preview is not None or self.good_data()
+class PostType(str, Enum):
+    """ Represents a media type """
+    IMAGE = "IMAGE"
+    VIDEO = "VIDEO"
+    IMAGE_GALLERY = "IMAGE_GALLERY"
+    SELFPOST = "SELFPOST"
 
 
 class MediaType(Enum):
     """ Represents a media type """
     IMAGE = 1
-    GALLERY = 2
-    VIDEO = 3
-    TEXT = 4
-    UNKNOWN = 5
+    VIDEO = 2
 
 
 @dataclass

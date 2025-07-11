@@ -9,7 +9,7 @@ import logging
 import click
 
 from grabbit.grabbit import Grabbit
-from grabbit.logger import GrabbitLogger
+from grabbit.logger import logger
 from grabbit.typing_custom import RedditAccount, DownloadOptions
 from grabbit.utils import get_version
 
@@ -52,7 +52,7 @@ def cli(output_dir: Path, user_config: Path, debug: bool, csv: Path, skip_failed
         grabbit.exit()
         sys.exit(0)
 
-    logger = GrabbitLogger(level=logging.DEBUG if debug else logging.INFO)
+    logger.setLevel(logging.DEBUG if debug else logging.INFO)
 
     logger.info("Welcome to Grabbit! 🐰")
 
@@ -61,7 +61,7 @@ def cli(output_dir: Path, user_config: Path, debug: bool, csv: Path, skip_failed
         config = json.load(f)
         user = RedditAccount(**config)
 
-    grabbit = Grabbit(user=user, logger=logger)
+    grabbit = Grabbit(user=user)
     if not grabbit.logged_in():
         logger.error("Failed to log in to Reddit, check your credentials")
         sys.exit(1)
@@ -77,7 +77,7 @@ def cli(output_dir: Path, user_config: Path, debug: bool, csv: Path, skip_failed
         save_every=save_every,
     )
 
-    logger.set_grabbit(grabbit)
+    logger.set_stats_provider(grabbit)
 
     if csv is not None:
         logger.info("Downloading posts specified in CSV file %s 🚀", csv)

@@ -4,19 +4,15 @@ import re
 
 from requests.models import Response
 
-from grabbit.utils import guess_media_type
-from grabbit.typing_custom import MediaType
-from grabbit.httpclient import HTTPClient
+from .guess_media import guess_media_type
+from .httpclient import HTTPClient, http_client
 
 class WaybackList:
     """ A class that represents a list of URLs from the Wayback Machine. """
     _current: int = 0
     _urls: list[str] = []
 
-    _http_client: HTTPClient
-
-    def __init__(self, http_client: HTTPClient, urls: list[str]):
-        self._http_client = http_client
+    def __init__(self, urls: list[str]):
         self._urls = urls
 
     def __iter__(self):
@@ -38,8 +34,8 @@ class WaybackList:
         self._current += 1
 
         # If the url is not a raw media link, check if it has a media source and add it to the list
-        response = self._http_client.get(self._urls[current])
-        if guess_media_type(response) == MediaType.UNKNOWN:
+        response = http_client.get(self._urls[current])
+        if guess_media_type(response) is None:
             media_sources = self._get_media_sources(response)
             if len(media_sources) > 0:
                 self._urls = self._urls[:current+1] + media_sources + self._urls[current+1:]
@@ -61,14 +57,9 @@ class Wayback:
     _api_url: str = "https://web.archive.org/cdx/search/cdx"
     _src_url: str = "https://web.archive.org/web"
 
-    _http_client: HTTPClient
-
-    def __init__(self, http_client: HTTPClient):
-        self._http_client = http_client
-
     def get(self, url: str) -> WaybackList:
         """ Returns a list of Wayback URLs for the specified URL. """
-        return WaybackList(self._http_client, self._get_urls(url))
+        return WaybackList(self._get_urls(url))
 
     def _get_urls(self, url: str) -> list[str]:
         params = {
@@ -76,7 +67,7 @@ class Wayback:
             "output": "json",
             "fl": "timestamp,statuscode"
         }
-        captures = self._http_client.get(self._api_url, params).json()
+        captures = http_client.get(self._api_url, params).json()
 
         if len(captures) == 0:
             return []
@@ -84,3 +75,5 @@ class Wayback:
 
         stamps: list[str] = [capture[0] for capture in captures if capture[1].isdigit()]
         return [f"{self._src_url}/{stamp}/{url}" for stamp in sorted(stamps)]
+
+wayback = Wayback()
