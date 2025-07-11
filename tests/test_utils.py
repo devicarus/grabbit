@@ -19,7 +19,7 @@ def test_guess_media_type():
     assert guess_media_type(response) == MediaType.VIDEO
 
     response.headers["content-type"] = "application/json"
-    assert guess_media_type(response) == MediaType.UNKNOWN
+    assert guess_media_type(response) is None
 
 def test_guess_media_extension():
     """ Tests the guess_media_extension function """
