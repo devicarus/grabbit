@@ -6,7 +6,7 @@ from praw.models import Submission
 from grabbit.downloader import Downloader
 from grabbit.downloader.sources import MediaSource
 from grabbit.logger import logger
-from grabbit.typing_custom import PostType, MediaType
+from grabbit.typing_custom import PostType, post_type_from_media_type
 from grabbit.utils import branch_counter
 
 
@@ -33,4 +33,4 @@ class MediaSourceDownloader(Downloader):
         media_type, file = MediaSource.get(getattr(submission, 'domain', None)).download(submission.url, target)
         if file is None:
             return None, []
-        return PostType.IMAGE if media_type == MediaType.IMAGE else PostType.VIDEO, [file]
+        return post_type_from_media_type(media_type), [file]
