@@ -21,7 +21,7 @@ class Downloader:
     def download(cls, submission: Submission, target: Path) -> bool:
         branch_counter.increment("module", cls.__name__)
         post_type, files = cls.download_media(submission, target)
-        if len(files) == 0:
+        if post_type is None:
             return False
         cls.download_metadata(submission, target, post_type, files)
         return True
@@ -51,5 +51,6 @@ class Downloader:
                 ) if submission.author else None,
                 "date": submission.created_utc,
                 "type": post_type,
+                "text": submission.selftext if submission.selftext else None,
                 "files": [str(file.relative_to(target.parent)) for file in files],
             }, file, indent=4)
