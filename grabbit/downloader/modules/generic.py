@@ -3,12 +3,11 @@ from typing import Optional
 
 from praw.models import Submission
 
-from grabbit.downloader.generic.image import download_image
-from grabbit.downloader.generic.video import download_video
+from grabbit.downloader.generic import download
 from grabbit.logger import logger
 from grabbit.downloader import Downloader
 from grabbit.utils.httpclient import http_client
-from grabbit.typing_custom import MediaType, PostType
+from grabbit.typing_custom import PostType, post_type_from_media_type, MediaType
 from grabbit.utils import guess_media_type
 
 
@@ -24,21 +23,19 @@ class GenericDownloader(Downloader):
     def download_media(submission: Submission, target: Path) -> (Optional[PostType], list[Path]):
         response = http_client.head(submission.url, allow_redirects=True)
         guess = guess_media_type(response)
-        if guess is None:
-            logger.debug("Failed to guess post format")
-        else:
-            logger.debug("Guessed format as %s", guess.name.lower())
 
-        if guess is MediaType.IMAGE:
-            return PostType.IMAGE, [download_image(submission.url, target)]
-        if guess is MediaType.VIDEO:
-            return PostType.VIDEO, [download_video(submission.url, target)]
+        if guess is not None:
+            logger.debug("Guessed media type as %s", guess.name.lower())
+            file = download(submission.url, target, guess)
+            if file is not None:
+                return post_type_from_media_type(guess), [file]
+            return None, []
 
-        image_file = download_image(submission.url, target)
-        if image_file is not None:
-            return PostType.IMAGE, [image_file]
-        video_file = download_video(submission.url, target)
-        if video_file is not None:
-            return PostType.VIDEO, [video_file]
+        logger.debug("Failed to guess media type")
+        for media_type in MediaType:
+            logger.debug("Trying to download as %s", media_type.name.lower())
+            file = download(submission.url, target, media_type)
+            if file is not None:
+                return post_type_from_media_type(media_type), [file]
 
         return None, []

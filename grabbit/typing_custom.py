@@ -18,6 +18,13 @@ class MediaType(Enum):
     VIDEO = 2
 
 
+def post_type_from_media_type(media_type: MediaType) -> PostType:
+    return {
+        MediaType.IMAGE: PostType.IMAGE,
+        MediaType.VIDEO: PostType.VIDEO,
+    }[media_type]
+
+
 @dataclass
 class RedditAccount:
     """ Represents a Reddit user """
