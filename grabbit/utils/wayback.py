@@ -5,7 +5,7 @@ import re
 from requests.models import Response
 
 from .guess_media import guess_media_type
-from .httpclient import HTTPClient, http_client
+from .httpclient import http_client, RequestFailedException
 
 class WaybackList:
     """ A class that represents a list of URLs from the Wayback Machine. """
@@ -34,11 +34,14 @@ class WaybackList:
         self._current += 1
 
         # If the url is not a raw media link, check if it has a media source and add it to the list
-        response = http_client.get(self._urls[current])
-        if guess_media_type(response) is None:
-            media_sources = self._get_media_sources(response)
-            if len(media_sources) > 0:
-                self._urls = self._urls[:current+1] + media_sources + self._urls[current+1:]
+        try:
+            response = http_client.get(self._urls[current])
+            if guess_media_type(response) is None:
+                media_sources = self._get_media_sources(response)
+                if len(media_sources) > 0:
+                    self._urls = self._urls[:current + 1] + media_sources + self._urls[current + 1:]
+        except RequestFailedException:
+            pass
 
         return self._urls[current]
 
