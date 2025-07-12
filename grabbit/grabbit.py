@@ -127,14 +127,18 @@ class Grabbit:
         target.mkdir(parents=True, exist_ok=True)
         target = target / submission.id
 
-        if not get_downloader(submission).download(submission, target):
-            logger.info("❌ Failed to download post %s from r/%s", submission.id, submission.subreddit.display_name)
+        downloader = get_downloader(submission)
+        logger.debug("Using %s for submission %s", downloader.__name__, submission.id)
+
+        if not downloader.download(submission, target):
             self._posts[submission.id] = PostStatus.FAILED
+            branch_counter.increment("module", downloader.__name__, "domain", getattr(submission, "domain", "unknown"), "fail")
+            logger.info("❌ Failed to download post %s from r/%s", submission.id, submission.subreddit.display_name)
             return
 
-        self._posts[submission.id] = PostStatus.DOWNLOADED
-
         self._added_count += 1
+        self._posts[submission.id] = PostStatus.DOWNLOADED
+        branch_counter.increment("module", downloader.__name__, "domain", getattr(submission, "domain", "unknown"), "success")
         logger.info("✅ Downloaded post %s from r/%s", submission.id, submission.subreddit.display_name)
 
 
