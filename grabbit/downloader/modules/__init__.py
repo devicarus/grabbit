@@ -6,7 +6,7 @@ from praw.models import Submission
 from prawcore.exceptions import NotFound
 
 from grabbit.typing_custom import PostType
-from grabbit.utils import safe, branch_counter
+from grabbit.utils import safe
 
 
 class Downloader:
@@ -19,7 +19,6 @@ class Downloader:
 
     @classmethod
     def download(cls, submission: Submission, target: Path) -> bool:
-        branch_counter.increment("module", cls.__name__)
         post_type, files = cls.download_media(submission, target)
         if post_type is None:
             return False

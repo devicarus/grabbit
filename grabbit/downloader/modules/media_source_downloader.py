@@ -7,7 +7,6 @@ from grabbit.downloader import Downloader
 from grabbit.downloader.sources import MediaSource
 from grabbit.logger import logger
 from grabbit.typing_custom import PostType, post_type_from_media_type
-from grabbit.utils import branch_counter
 
 
 class MediaSourceDownloader(Downloader):
@@ -20,11 +19,9 @@ class MediaSourceDownloader(Downloader):
             return False
 
         if MediaSource.get(domain) is not None:
-            branch_counter.increment("source", "hit", domain)
             logger.debug("MediaSource found for %s", domain)
             return True
 
-        branch_counter.increment("source", "miss", domain)
         logger.debug("No MediaSource found for %s", domain)
         return False
 

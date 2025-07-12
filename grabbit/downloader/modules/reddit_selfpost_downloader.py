@@ -7,7 +7,7 @@ from grabbit.downloader import Downloader
 from grabbit.typing_custom import PostType
 
 
-class SelfpostDownloader(Downloader):
+class RedditSelfpostDownloader(Downloader):
     """ Downloader for gallery posts. """
 
     @staticmethod
@@ -16,4 +16,5 @@ class SelfpostDownloader(Downloader):
 
     @staticmethod
     def download_media(submission: Submission, target: Path) -> (Optional[PostType], list[Path]):
+        """ Dummy method, as selfpost bodies are always saved in metadata. """
         return PostType.SELFPOST, []

@@ -10,7 +10,7 @@ from grabbit.logger import logger
 from grabbit.typing_custom import PostType
 
 
-class GalleryDownloader(Downloader):
+class RedditGalleryDownloader(Downloader):
     """ Downloader for gallery posts. """
 
     @staticmethod
@@ -22,7 +22,7 @@ class GalleryDownloader(Downloader):
         target.mkdir(parents=True, exist_ok=True)
 
         files: list[Path] = []
-        urls = GalleryDownloader._process_gallery(submission)
+        urls = RedditGalleryDownloader._process_gallery(submission)
         for (n, url) in enumerate(urls):
             file = download_image(url, target / str(n))
             if file:
