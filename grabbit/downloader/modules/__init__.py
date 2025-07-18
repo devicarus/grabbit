@@ -50,6 +50,6 @@ class Downloader:
                 ) if submission.author else None,
                 "date": submission.created_utc,
                 "type": post_type,
-                "text": submission.selftext if submission.selftext else None,
+                "body": submission.selftext if submission.selftext else None,
                 "files": [str(file.relative_to(target.parent)) for file in files],
             }, file, indent=4)
